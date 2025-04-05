@@ -1,5 +1,5 @@
 import pygame
-from DisplayModeButton import DisplayModeButtonFunctionality
+from engine.DisplayModeButton import DisplayModeButtonFunctionality
 from BackButton import BackButtonFunctionality
 
 def ShowSettingsScreen(screen, font, original_background):

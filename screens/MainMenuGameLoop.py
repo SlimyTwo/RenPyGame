@@ -1,8 +1,8 @@
 import pygame
 import sys
 
-import WindowCreationHandler
-from WindowCreationHandler import DrawBackground
+from engine import WindowCreationHandler
+from engine.WindowCreationHandler import DrawBackground
 from StartButton import StartButtonDrawingAndHandling
 from LoadGameButton import LoadGameButtonDrawingAndHandling
 from SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
