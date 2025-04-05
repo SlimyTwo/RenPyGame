@@ -1,5 +1,5 @@
 from WindowCreationHandler import InitializeWindowCreation
-from MainMenuGameLoop import RunMainMenuLoop
+from screens.MainMenuGameLoop import RunMainMenuLoop
 
 def RunningPygameBasics():
     InitializeWindowCreation()

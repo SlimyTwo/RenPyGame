@@ -1,6 +1,6 @@
-import sys, pygame
+import pygame
 
-from MainMenuSetup import ExecuteMainMenuSetup
+from screens.MainMenuSetup import ExecuteMainMenuSetup
 
 pygame.init()
 
