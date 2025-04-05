@@ -1,5 +1,5 @@
 import pygame
-from SettingsScreen import ShowSettingsScreen
+from screens.SettingsScreen import ShowSettingsScreen
 from ButtonUtility import RunButton
 
 button_text = "Settings"
