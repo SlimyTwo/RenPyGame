@@ -1,5 +1,5 @@
 from screens.RunningPygameBasics import RunningPygameBasics
-from MenuButtons import DrawMenuButtons
+from buttons.MenuButtons import DrawMenuButtons
 
 def ExecuteMainMenuSetup():
     RunningPygameBasics()

@@ -3,10 +3,10 @@ import sys
 
 from engine import WindowCreationHandler
 from engine.WindowCreationHandler import DrawBackground
-from StartButton import StartButtonDrawingAndHandling
-from LoadGameButton import LoadGameButtonDrawingAndHandling
-from SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
-from QuitButton import QuitButtonDrawingAndHandling
+from buttons.StartButton import StartButtonDrawingAndHandling
+from buttons.LoadGameButton import LoadGameButtonDrawingAndHandling
+from buttons.SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
+from buttons.QuitButton import QuitButtonDrawingAndHandling
 
 def RunMainMenuLoop():
     running = True
