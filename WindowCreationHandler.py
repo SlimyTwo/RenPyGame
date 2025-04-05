@@ -14,7 +14,7 @@ def InitializeWindowCreation():
     pygame.display.set_caption("Fantasy Falls")
     font = pygame.font.SysFont(None, 60)
 
-    background = pygame.image.load("images\\MainMenuBackground.png").convert()
+    background = pygame.image.load("assets/Images/MainMenuBackground.png").convert()
 
 def DrawBackground():
     global screen, background

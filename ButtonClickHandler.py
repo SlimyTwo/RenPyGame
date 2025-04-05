@@ -3,7 +3,7 @@ import pygame
 click_sound = None
 click_states = {}
 
-def handle_button_click(rect, on_click, id="default", sound_path="audio\\click.wav"):
+def handle_button_click(rect, on_click, id="default", sound_path="assets/audio/click.wav"):
     global click_sound
 
     if click_sound is None:
