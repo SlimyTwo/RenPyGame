@@ -1,24 +1,19 @@
 import pygame
-
-screen = None
-font = None
-background = None
+import utility.GlobalVariables as gv  # gv = global variable alias
 
 def InitializeWindowCreation():
-    global screen, font, background
-
     pygame.init()
     pygame.mixer.init()
 
-    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+    # Create and store shared screen + font
+    gv.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption("Fantasy Falls")
-    font = pygame.font.SysFont(None, 60)
+    gv.font = pygame.font.SysFont(None, 60)
 
-    background = pygame.image.load("assets/Images/MainMenuBackground.png").convert()
+    # Load and store background image
+    gv.background = pygame.image.load("assets/Images/MainMenuBackground.png").convert()
 
 def DrawBackground():
-    global screen, background
-
-    screen_width, screen_height = screen.get_size()
-    scaled_background = pygame.transform.scale(background, (screen_width, screen_height))
-    screen.blit(scaled_background, (0, 0))
+    screen_width, screen_height = gv.screen.get_size()
+    scaled_background = pygame.transform.scale(gv.background, (screen_width, screen_height))
+    gv.screen.blit(scaled_background, (0, 0))
