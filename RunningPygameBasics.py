@@ -14,7 +14,7 @@ def RunningPygameBasics():
     pygame.display.set_caption("Fantasy Falls")
     font = pygame.font.SysFont(None, 60)
 
-    original_background = pygame.image.load("images\\background.png").convert()
+    original_background = pygame.image.load("images\\MainMenuBackground.png").convert()
 
     running = True
     while running:
