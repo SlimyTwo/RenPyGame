@@ -1,2 +1,2 @@
-from .WindowCreationHandler import InitializeWindowCreation, DrawBackground
+from .WindowCreationHandler import InitializeWindowCreation, DrawMainMenuBackground
 from .DisplayModeButton import DisplayModeButtonFunctionality

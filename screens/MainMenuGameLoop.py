@@ -1,7 +1,7 @@
 import pygame
 import utility.GlobalVariables as gv
 
-from engine import DrawBackground
+from engine import DrawMainMenuBackground
 from buttons.StartButton import StartButtonDrawingAndHandling
 from buttons.LoadGameButton import LoadGameButtonDrawingAndHandling
 from buttons.SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
@@ -15,7 +15,7 @@ def RunMainMenuLoop():
             if event.type == pygame.QUIT:
                 running = False
 
-        DrawBackground()
+        DrawMainMenuBackground()
 
         StartButtonDrawingAndHandling(gv.screen, gv.font)
         LoadGameButtonDrawingAndHandling(gv.screen, gv.font)
