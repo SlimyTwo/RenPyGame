@@ -6,7 +6,7 @@ from buttons.StartButton import StartButtonDrawingAndHandling
 from buttons.LoadGameButton import LoadGameButtonDrawingAndHandling
 from buttons.SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
 from buttons.QuitButton import QuitButtonDrawingAndHandling
-from utility.CompleteProgramTermination import SystemTermination
+from utility.CompleteProgramTermination import ProgramTerminator
 
 def RunMainMenuLoop():
     running = True
@@ -28,4 +28,4 @@ def RunMainMenuLoop():
 
         pygame.display.flip()
 
-    SystemTermination()
+    ProgramTerminator.terminate()

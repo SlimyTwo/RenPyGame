@@ -1,8 +1,10 @@
 import pygame
 import sys
 
-def SystemTermination():
-    print("Terminating game...")
-    # Save state, stop music, fade out, etc.
-    pygame.quit()
-    sys.exit()
+class ProgramTerminator:
+    @classmethod
+    def terminate(cls):
+        print("Terminating game...")
+        # Save state, stop music, fade out, etc.
+        pygame.quit()
+        sys.exit()

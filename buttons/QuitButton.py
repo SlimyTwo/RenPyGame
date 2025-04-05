@@ -1,6 +1,6 @@
 import pygame
 from ui.ButtonUtility import RunButton
-from utility.CompleteProgramTermination import SystemTermination
+from utility.CompleteProgramTermination import ProgramTerminator
 
 button_text = "Quit"
 button_id = "quit"
@@ -21,4 +21,4 @@ def QuitButtonDrawingAndHandling(screen, font):
 
 def ExitGame():
     pygame.time.delay(300)
-    SystemTermination()
+    ProgramTerminator.terminate()
