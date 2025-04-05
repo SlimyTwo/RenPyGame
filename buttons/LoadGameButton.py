@@ -1,5 +1,5 @@
 import pygame
-from ButtonUtility import RunButton
+from ui.ButtonUtility import RunButton
 
 button_text = "Load Game"
 button_id = "load"

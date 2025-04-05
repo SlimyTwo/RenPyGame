@@ -1,6 +1,6 @@
 import pygame
 from screens.SettingsScreen import ShowSettingsScreen
-from ButtonUtility import RunButton
+from ui.ButtonUtility import RunButton
 
 button_text = "Settings"
 button_id = "settings"

@@ -1,5 +1,5 @@
-from ButtonClickHandler import handle_button_click
-from ButtonTextRenderer import draw_button_text
+from ui.ButtonClickHandler import handle_button_click
+from ui.ButtonTextRenderer import draw_button_text
 
 def RunButton(rect, text, button_id, screen, font, on_click):
     hovered = handle_button_click(rect, on_click, id=button_id)

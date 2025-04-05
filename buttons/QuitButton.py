@@ -1,6 +1,6 @@
 import pygame
 import sys
-from ButtonUtility import RunButton
+from ui.ButtonUtility import RunButton
 
 button_text = "Quit"
 button_id = "quit"
