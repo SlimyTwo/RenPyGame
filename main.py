@@ -1,10 +1,13 @@
 import pygame
 
-from screens.MainMenuSetup import ExecuteMainMenuSetup
 from utility.CompleteProgramTermination import ProgramTerminator
+from screens.RunningPygameBasics import RunningPygameBasics
+from screens.MainMenuGameLoop import RunMainMenuLoop
 
 pygame.init()
 
-ExecuteMainMenuSetup()
+RunningPygameBasics()
+
+RunMainMenuLoop()
 
 ProgramTerminator.terminate()
