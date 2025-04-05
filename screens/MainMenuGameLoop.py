@@ -1,5 +1,4 @@
 import pygame
-import sys
 
 from engine import WindowCreationHandler
 from engine.WindowCreationHandler import DrawBackground
@@ -7,6 +6,7 @@ from buttons.StartButton import StartButtonDrawingAndHandling
 from buttons.LoadGameButton import LoadGameButtonDrawingAndHandling
 from buttons.SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
 from buttons.QuitButton import QuitButtonDrawingAndHandling
+from utility.CompleteProgramTermination import SystemTermination
 
 def RunMainMenuLoop():
     running = True
@@ -28,5 +28,4 @@ def RunMainMenuLoop():
 
         pygame.display.flip()
 
-    pygame.quit()
-    sys.exit()
+    SystemTermination()
