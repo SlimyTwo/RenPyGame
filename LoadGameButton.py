@@ -4,7 +4,7 @@ from ButtonUtility import RunButton
 button_text = "Load Game"
 button_id = "load"
 
-def LoadGameButtonFunctionality(screen, font):
+def LoadGameButtonDrawingAndHandling(screen, font):
     width, height = screen.get_size()
     y_offset = -30
     button_rect = pygame.Rect(width // 2 - 100, height // 2 + y_offset - 40, 200, 80)

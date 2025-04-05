@@ -1,15 +1,15 @@
-from StartButton import StartButtonFunctionality
-from LoadGameButton import LoadGameButtonFunctionality
-from SettingsButton import SettingsButtonFunctionality
-from QuitButton import QuitButtonFunctionality
+from StartButton import StartButtonDrawingAndHandling
+from LoadGameButton import LoadGameButtonDrawingAndHandling
+from SettingsButton import SettingsButtonDrawingAndHandling
+from QuitButton import QuitButtonDrawingAndHandling
 
 def DrawMenuButtons():
 
     def DrawStartGameButton():
-        StartButtonFunctionality()
+        StartButtonDrawingAndHandling()
     def DrawLoadGameButton():
-        LoadGameButtonFunctionality()
+        LoadGameButtonDrawingAndHandling()
     def DrawSettingsButton():
-        SettingsButtonFunctionality()
+        SettingsButtonDrawingAndHandling()
     def DrawQuitButton():
-        QuitButtonFunctionality()
+        QuitButtonDrawingAndHandling()

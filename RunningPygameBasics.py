@@ -3,10 +3,10 @@ import sys
 
 import WindowCreationHandler
 from WindowCreationHandler import InitializeWindowCreation, DrawBackground
-from StartButton import StartButtonFunctionality
-from LoadGameButton import LoadGameButtonFunctionality
-from SettingsButton import SettingsButtonFunctionality, GetUpdatedScreen
-from QuitButton import QuitButtonFunctionality
+from StartButton import StartButtonDrawingAndHandling
+from LoadGameButton import LoadGameButtonDrawingAndHandling
+from SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
+from QuitButton import QuitButtonDrawingAndHandling
 
 def RunningPygameBasics():
     InitializeWindowCreation()
@@ -19,10 +19,10 @@ def RunningPygameBasics():
 
         DrawBackground()
 
-        StartButtonFunctionality(WindowCreationHandler.screen, WindowCreationHandler.font)
-        LoadGameButtonFunctionality(WindowCreationHandler.screen, WindowCreationHandler.font)
-        SettingsButtonFunctionality(WindowCreationHandler.screen, WindowCreationHandler.font, WindowCreationHandler.background)
-        QuitButtonFunctionality(WindowCreationHandler.screen, WindowCreationHandler.font)
+        StartButtonDrawingAndHandling(WindowCreationHandler.screen, WindowCreationHandler.font)
+        LoadGameButtonDrawingAndHandling(WindowCreationHandler.screen, WindowCreationHandler.font)
+        SettingsButtonDrawingAndHandling(WindowCreationHandler.screen, WindowCreationHandler.font, WindowCreationHandler.background)
+        QuitButtonDrawingAndHandling(WindowCreationHandler.screen, WindowCreationHandler.font)
 
         updated_screen = GetUpdatedScreen()
         if updated_screen:

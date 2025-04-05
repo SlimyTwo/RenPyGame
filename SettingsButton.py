@@ -9,7 +9,7 @@ background_ref = None
 # Track the updated screen across menus
 updated_screen_ref = [None]  # Mutable wrapper
 
-def SettingsButtonFunctionality(screen, font, background):
+def SettingsButtonDrawingAndHandling(screen, font, background):
     global background_ref
     background_ref = background
 
