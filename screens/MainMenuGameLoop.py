@@ -1,146 +1,172 @@
 import pygame
-import utility.GlobalVariables as gv
+import os
+from buttons.ButtonClass import Button
+from buttons.ButtonCreator import create_button
 
-from utility.DrawMainMenuBackground import DrawMainMenuBackground
-from buttons.StartButton import StartButtonDrawingAndHandling
-from buttons.LoadGameButton import LoadGameButtonDrawingAndHandling
-from buttons.SettingsButton import SettingsButtonDrawingAndHandling, GetUpdatedScreen
-from buttons.QuitButton import QuitButtonDrawingAndHandling
-from buttons.TestButton import create_test_button
-from buttons.ButtonClass import ButtonGroup
-from utility.CompleteProgramTermination import ProgramTerminator
+# Colors
+BACKGROUND = (40, 44, 52)
+TEXT_COLOR = (220, 220, 220)
+HOVER_COLOR = (100, 100, 150, 180)  # Semi-transparent hover color
+
+# Sound files paths
+click_sound_path = os.path.join("assets", "audio", "click.wav")
+hover_sound_path = os.path.join("assets", "audio", "hover.wav")
+focus_sound_path = os.path.join("assets", "audio", "focus.wav")
 
 
 def RunMainMenuLoop():
+    # Get the screen that was already created
+    screen = pygame.display.get_surface()
+    screen_width, screen_height = screen.get_size()
+    clock = pygame.time.Clock()
     running = True
 
-    # Load an icon for demo purposes
-    try:
-        icon = pygame.image.load("assets/images/settings_icon.png")
-        icon = pygame.transform.scale(icon, (24, 24))
-    except:
-        # Fallback if image can't be loaded
-        icon = None
+    # Load fonts
+    button_font = pygame.font.Font(None, 32)
+    small_font = pygame.font.Font(None, 24)
 
-    # Create a button group for radio-button style behavior
-    radio_group = ButtonGroup()
+    # Check if sound files exist
+    sound_path = click_sound_path if os.path.exists(click_sound_path) else None
+    hover_sound = hover_sound_path if os.path.exists(hover_sound_path) else None
 
-    # Create buttons with different features to showcase capabilities
-    test_button = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=80,
-        y_offset=-150,
-        text="Invisible with Debug",
+    # Create main menu buttons (vertically aligned)
+    button_width = 250
+    button_height = 50
+    button_spacing = 20
+
+    # Start Game button
+    start_game_btn = create_button(
+        screen, button_font, width=button_width, height=button_height,
+        y_offset=-100, text="Start Game",
+        hover_text="▶ Start Game ▶",  # Text when hovering
+        tooltip="Start a new game", sound_path=sound_path,
+        hover_sound_path=hover_sound,
+        visible_background=False,
+        debug_hitbox=True
+    )
+
+    # Load Game button (greyed out)
+    load_game_btn = create_button(
+        screen, button_font, width=button_width, height=button_height,
+        y_offset=-100 + button_height + button_spacing,
+        text="Load Game",
+        hover_text="Load Game (Unavailable)",  # Text when hovering
+        tooltip="Load a saved game",
         visible_background=False,
         debug_hitbox=True,
-        debug_color=(255, 0, 0),
-        tooltip="This button has an invisible background with hitbox outline"
+        disabled=True
     )
 
-    icon_button = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=80,
-        y_offset=-50,
-        text="Button with Icon",
-        visible_background=True,
-        debug_hitbox=False,
-        icon=icon,
-        tooltip="This button has an icon and tooltip"
+    # Settings button
+    settings_btn = create_button(
+        screen, button_font, width=button_width, height=button_height,
+        y_offset=-100 + (button_height + button_spacing) * 2,
+        text="Settings",
+        hover_text="⚙ Settings ⚙",  # Text when hovering
+        tooltip="Game settings",
+        sound_path=sound_path,
+        hover_sound_path=hover_sound,
+        visible_background=False,
+        debug_hitbox=True
     )
 
-    disabled_button = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=80,
-        y_offset=50,
-        text="Disabled Button",
-        visible_background=True,
-        disabled=True,
-        tooltip="This button is disabled and can't be clicked"
+    # Quit button
+    quit_btn = create_button(
+        screen, button_font, width=button_width, height=button_height,
+        y_offset=-100 + (button_height + button_spacing) * 3,
+        text="Quit",
+        hover_text="✖ Exit Game ✖",  # Text when hovering
+        tooltip="Exit the game",
+        sound_path=sound_path,
+        hover_sound_path=hover_sound,
+        visible_background=False,
+        debug_hitbox=True
     )
 
-    # Radio button group - only one can be selected at a time
-    radio_button1 = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=60,
-        y_offset=150,
-        text="Radio Option 1",
-        button_group=radio_group,
-        tooltip="Part of radio group"
-    )
+    # Button handlers
+    def handle_start_game():
+        # Start new game logic would go here
+        return True
 
-    radio_button2 = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=60,
-        y_offset=220,
-        text="Radio Option 2",
-        button_group=radio_group,
-        tooltip="Part of radio group"
-    )
+    def handle_settings():
+        # Open settings menu logic would go here
+        return True
 
-    radio_button3 = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=60,
-        y_offset=290,
-        text="Radio Option 3",
-        button_group=radio_group,
-        tooltip="Part of radio group"
-    )
+    def handle_quit():
+        nonlocal running
+        running = False
+        return True
 
-    animation_button = create_test_button(
-        gv.screen, gv.font,
-        width=500, height=80,
-        y_offset=370,
-        text="Animation Button",
-        tooltip="This button has smooth color transitions"
-    )
+    start_game_btn.on_click = handle_start_game
+    settings_btn.on_click = handle_settings
+    quit_btn.on_click = handle_quit
 
+    # Ensure the first button has focus initially for keyboard navigation
+    start_game_btn.set_focus(True)
+
+    # Load background image
+    try:
+        bg_path = os.path.join("assets", "images", "MainMenuBackground.png")
+        if os.path.exists(bg_path):
+            original_bg = pygame.image.load(bg_path)
+            # Get original image dimensions
+            bg_width, bg_height = original_bg.get_size()
+
+            # Calculate scaling factor to fill the screen
+            width_ratio = screen_width / bg_width
+            height_ratio = screen_height / bg_height
+            scale_factor = max(width_ratio, height_ratio)
+
+            # Calculate new dimensions
+            new_width = int(bg_width * scale_factor)
+            new_height = int(bg_height * scale_factor)
+
+            # Scale the image with the calculated dimensions
+            background_image = pygame.transform.scale(original_bg, (new_width, new_height))
+
+            # Calculate position to center the image
+            bg_x = (screen_width - new_width) // 2
+            bg_y = (screen_height - new_height) // 2
+
+            # Store position with the image
+            bg_pos = (bg_x, bg_y)
+        else:
+            background_image = None
+            bg_pos = (0, 0)
+    except:
+        background_image = None
+        bg_pos = (0, 0)
+
+    # Main game loop
     while running:
-        # Process all events
+        # Draw background
+        if background_image:
+            screen.fill(BACKGROUND)  # Fill with background color first
+            screen.blit(background_image, bg_pos)  # Draw the centered image
+        else:
+            screen.fill(BACKGROUND)
+
+        # Process events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Toggle disabled state with keyboard for demo
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_d:
-                    disabled_button.set_disabled(not disabled_button.disabled)
+            # Handle button events
+            Button.update_all(event)
 
-            # Handle events for all buttons
-            test_button.handle_event(event)
-            icon_button.handle_event(event)
-            disabled_button.handle_event(event)
-            radio_button1.handle_event(event)
-            radio_button2.handle_event(event)
-            radio_button3.handle_event(event)
-            animation_button.handle_event(event)
+            # Global keyboard shortcut
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                running = False
 
-        DrawMainMenuBackground()
+        # Draw all buttons
+        start_game_btn.draw()
+        load_game_btn.draw()
+        settings_btn.draw()
+        quit_btn.draw()
 
-        # StartButtonDrawingAndHandling(gv.screen, gv.font)
-
-        # Display some info text
-        info_font = pygame.font.Font(None, 24)
-        info_text = info_font.render("Press 'D' to toggle disabled state", True, (255, 255, 255))
-        gv.screen.blit(info_text, (20, 20))
-
-        selected = radio_group.get_selected()
-        if selected:
-            selection_text = info_font.render(f"Selected: {selected.text}", True, (255, 255, 255))
-            gv.screen.blit(selection_text, (20, 50))
-
-        # Draw all the test buttons
-        test_button.draw()
-        icon_button.draw()
-        disabled_button.draw()
-        radio_button1.draw()
-        radio_button2.draw()
-        radio_button3.draw()
-        animation_button.draw()
-
-        updated_screen = GetUpdatedScreen()
-        if updated_screen:
-            gv.screen = updated_screen
+        # Draw instructions
+        instructions = small_font.render("Press TAB to navigate, ENTER to select, Q to quit", True, TEXT_COLOR)
+        screen.blit(instructions, (screen_width // 2 - instructions.get_width() // 2, screen_height - 40))
 
         pygame.display.flip()
-
-    ProgramTerminator.terminate()
+        clock.tick(60)
