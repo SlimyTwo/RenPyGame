@@ -8,7 +8,7 @@ def InitializeWindowCreation():
     # Create and store shared screen + font
     gv.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption("Fantasy Falls")
-    gv.font = pygame.font.SysFont(None, 60)
+    gv.font = pygame.font.SysFont("", 60)
 
     # Load and store background image
     gv.background = pygame.image.load("assets/Images/MainMenuBackground.png").convert()
