@@ -1,6 +1,6 @@
 import pygame
 from engine.DisplayModeButton import DisplayModeButtonFunctionality
-from buttons.BackButton import BackButtonFunctionality
+
 
 def ShowSettingsScreen(screen, font, original_background):
     running = True
@@ -15,14 +15,6 @@ def ShowSettingsScreen(screen, font, original_background):
         scaled_background = pygame.transform.scale(original_background, (screen_width, screen_height))
         screen.blit(scaled_background, (0, 0))
 
-        # ✅ Display Mode toggle button
-        new_screen = DisplayModeButtonFunctionality(screen, font)
-        if new_screen:
-            screen = new_screen
-
-        # ✅ Back button to exit settings
-        if BackButtonFunctionality(screen, font):
-            running = False
 
         pygame.display.flip()
 
