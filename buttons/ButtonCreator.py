@@ -1,9 +1,9 @@
 import pygame
-from buttons.ButtonClass import Button, ButtonGroup
+from buttons.ButtonClass import Button  # Remove ButtonGroup from import
 
 
 def create_button(screen, font, width=200, height=80, y_offset=50, x_offset=0, text="Button",
-                  hover_text=None,  # Added hover_text parameter
+                  hover_text=None, hover_text_color=None,  # Added hover_text_color parameter
                   visible_background=True, debug_hitbox=False, debug_color=(255, 0, 0),
                   icon=None, tooltip=None, disabled=False, button_group=None,
                   sound_path=None, hover_sound_path=None, focus_sound_path=None,
@@ -15,44 +15,6 @@ def create_button(screen, font, width=200, height=80, y_offset=50, x_offset=0, t
                   border_color=(50, 50, 50), translation_func=None, animation_speed=5):
     """
     Create a button with customizable parameters.
-
-    Args:
-        screen: pygame surface to draw on
-        font: pygame font for text
-        width: Button width in pixels
-        height: Button height in pixels
-        y_offset: Vertical offset from screen center
-        x_offset: Horizontal offset from screen center
-        text: Text to display on button (can include '\n' for multiple lines)
-        hover_text: Text to display when mouse hovers over button
-        visible_background: Whether to draw the button background
-        debug_hitbox: Whether to display a thin outline showing the button's hitbox
-        debug_color: Color for the debug hitbox outline (RGB tuple or color name)
-        icon: Optional pygame Surface to display as an icon
-        tooltip: Optional text to display when hovering
-        disabled: Whether the button is disabled
-        button_group: Optional ButtonGroup this button belongs to
-        sound_path: Path to click sound file
-        hover_sound_path: Path to hover sound file
-        focus_sound_path: Path to focus sound file
-        text_align: Text alignment ("left", "center", "right")
-        shape: Shape type ("rectangle", "circle", "polygon")
-        shape_params: Extra parameters for non-rectangle shapes (radius for circle, points for polygon)
-        badge_text: Text to show in a badge (notification) on the button
-        badge_color: Color of the badge background
-        badge_position: Position of badge ("topleft", "topright", "bottomleft", "bottomright")
-        shortcut_key: Keyboard shortcut to trigger button (pygame key constant)
-        toggle_mode: Whether this button can be toggled on/off
-        toggled: Initial toggle state if toggle_mode is True
-        toggle_color: Button color when toggled on
-        focus_color: Background color when button has keyboard focus
-        focus_border_color: Border color when button has keyboard focus
-        bg_color: Background color of button
-        hover_color: Background color when hovered
-        text_color: Text color
-        border_color: Border color
-        translation_func: Function to translate text for localization
-        animation_speed: Speed of hover/click animations (higher is faster)
     """
     # Handle string color names (like "Green") by converting to RGB tuples
     if isinstance(debug_color, str):
@@ -109,6 +71,7 @@ def create_button(screen, font, width=200, height=80, y_offset=50, x_offset=0, t
         bg_color=bg_color,
         hover_color=hover_color,
         text_color=text_color,
+        hover_text_color=hover_text_color,  # Pass through the hover text color
         border_color=border_color,
         visible_background=visible_background,
         debug_hitbox=debug_hitbox,

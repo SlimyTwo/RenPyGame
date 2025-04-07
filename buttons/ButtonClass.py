@@ -8,7 +8,7 @@ class Button:
 
     def __init__(self, rect, text, button_id, screen, font, on_click=None,
                  bg_color=(100, 100, 100), hover_color=(150, 150, 150),
-                 text_color=(255, 255, 255), border_color=(200, 200, 200),
+                 text_color=(255, 255, 255), hover_text_color=None, border_color=(200, 200, 200),
                  border_width=1, visible_background=True,
                  debug_hitbox=False, debug_color=(255, 0, 0),
                  icon=None, tooltip=None, disabled=False,
@@ -30,6 +30,7 @@ class Button:
         self.bg_color = bg_color
         self.hover_color = hover_color
         self.text_color = text_color
+        self.hover_text_color = hover_text_color or text_color  # Added hover text color
         self.border_color = border_color
         self.border_width = border_width
         self.visible_background = visible_background
@@ -124,7 +125,7 @@ class Button:
             # Use hover colors when mouse is over button
             bg_color = self.hover_color
             border_color = self.border_color
-            text_color = self.text_color
+            text_color = self.hover_text_color  # Use hover text color when hovering
         else:
             # Use normal colors
             bg_color = self.bg_color
