@@ -3,21 +3,38 @@ from buttons.ButtonClass import Button
 from buttons.SliderClass import SliderButton  # Add import for the slider
 
 
-def create_button(screen, font, width=200, height=80, y_offset=50, x_offset=0, text="Button",
-                  hover_text=None, hover_text_color=None,
-                  visible_background=True, debug_hitbox=False, debug_color=(255, 0, 0),
-                  icon=None, tooltip=None, disabled=False, button_group=None,
-                  sound_path=None, hover_sound_path=None, focus_sound_path=None,
-                  text_align="center", shape="rectangle", shape_params=None,
-                  badge_text=None, badge_color=(255, 0, 0), badge_position="topright",
-                  shortcut_key=None, toggle_mode=False, toggled=False, toggle_color=(160, 160, 200),
-                  focus_color=(200, 200, 255), focus_border_color=(100, 100, 255),
-                  bg_color=(120, 120, 120), hover_color=(160, 160, 160), text_color=(255, 255, 255),
-                  border_color=(50, 50, 50), translation_func=None, animation_speed=5):
+def create_button(screen, font, text="Button", **kwargs):
     """
     Create a button with customizable parameters.
+
+    Required params:
+      screen: The pygame surface to draw on
+      font: Font for button text
+      text: Button text label
+
+    Optional params (passed as kwargs):
+      x, y: Direct position coordinates
+      width, height: Button dimensions
+      x_offset, y_offset: Position offsets from center
+      on_click: Button click handler function
+      music_manager: MusicManager instance for volume control
     """
-    # Handle string color names (like "Green") by converting to RGB tuples
+    # Extract position parameters
+    x = kwargs.get('x', None)
+    y = kwargs.get('y', None)
+    width = kwargs.get('width', 200)
+    height = kwargs.get('height', 50)
+    x_offset = kwargs.get('x_offset', 0)
+    y_offset = kwargs.get('y_offset', 0)
+
+    # Extract music_manager
+    music_manager = kwargs.get('music_manager', None)
+
+    # Create a safe button ID from the text (remove non-alphanumeric chars)
+    button_id = kwargs.get('button_id', f"btn_{''.join(c for c in text if c.isalnum() or c == '_')}")
+
+    # Handle string color names by converting to RGB tuples
+    debug_color = kwargs.get('debug_color', (255, 0, 0))
     if isinstance(debug_color, str):
         color_map = {
             "red": (255, 0, 0),
@@ -31,18 +48,25 @@ def create_button(screen, font, width=200, height=80, y_offset=50, x_offset=0, t
             "cyan": (0, 255, 255),
             "magenta": (255, 0, 255)
         }
-        debug_color = color_map.get(debug_color.lower(), (255, 0, 0))  # Default to red if not found
+        debug_color = color_map.get(debug_color.lower(), (255, 0, 0))
 
-    # Create a safe button ID from the text (remove non-alphanumeric chars)
-    button_id = f"btn_{''.join(c for c in text if c.isalnum() or c == '_')}"
-
+    # Create rect based on provided parameters
     screen_width, screen_height = screen.get_size()
-    button_rect = pygame.Rect(
-        screen_width // 2 - width // 2 + x_offset,  # Center horizontally with offset
-        screen_height // 2 + y_offset,  # Position vertically with offset
-        width,  # Custom width
-        height  # Custom height
-    )
+    if x is not None and y is not None:
+        # Use direct position if provided
+        button_rect = pygame.Rect(x, y, width, height)
+    else:
+        # Center with offsets
+        button_rect = pygame.Rect(
+            screen_width // 2 - width // 2 + x_offset,
+            screen_height // 2 + y_offset,
+            width,
+            height
+        )
+
+    # Handle shape parameters
+    shape = kwargs.get('shape', 'rectangle')
+    shape_params = kwargs.get('shape_params', None)
 
     # For circle shape, calculate radius if not provided
     if shape == "circle" and (not shape_params or "radius" not in shape_params):
@@ -53,106 +77,117 @@ def create_button(screen, font, width=200, height=80, y_offset=50, x_offset=0, t
     # For polygon shape, set default triangle if no points provided
     if shape == "polygon" and (not shape_params or "points" not in shape_params):
         # Default to a triangle as example
-        center_x = screen_width // 2
-        center_y = screen_height // 2 + y_offset
+        center_x = button_rect.centerx
+        center_y = button_rect.centery
         shape_params = shape_params or {}
         shape_params["points"] = [
             (center_x, center_y - height // 2),  # Top
             (center_x - width // 2, center_y + height // 2),  # Bottom left
-            (center_x + width // 2, center_y + height // 2)  # Bottom right
+            (center_x + width // 2, center_y + height // 2),  # Bottom right
         ]
 
+    # Extract on_click handler
+    on_click = kwargs.get('on_click', lambda: print(f"{text.splitlines()[0]} clicked!"))
+
+    # Create the button with all parameters
     button = Button(
         rect=button_rect,
         text=text,
         button_id=button_id,
         screen=screen,
         font=font,
-        on_click=lambda: print(f"{text.splitlines()[0]} clicked!"),
-        bg_color=bg_color,
-        hover_color=hover_color,
-        text_color=text_color,
-        hover_text_color=hover_text_color,
-        border_color=border_color,
-        visible_background=visible_background,
-        debug_hitbox=debug_hitbox,
+        on_click=on_click,
+        music_manager=music_manager,  # Add music_manager
+        bg_color=kwargs.get('bg_color', (120, 120, 120)),
+        hover_color=kwargs.get('hover_color', (160, 160, 160)),
+        text_color=kwargs.get('text_color', (255, 255, 255)),
+        hover_text_color=kwargs.get('hover_text_color', None),
+        border_color=kwargs.get('border_color', (50, 50, 50)),
+        border_width=kwargs.get('border_width', 1),
+        visible_background=kwargs.get('visible_background', True),
+        debug_hitbox=kwargs.get('debug_hitbox', False),
         debug_color=debug_color,
-        icon=icon,
-        tooltip=tooltip,
-        disabled=disabled,
-        animation_speed=animation_speed,
-        hover_text=hover_text,
-
-        # Feature parameters
-        sound_path=sound_path,
-        hover_sound_path=hover_sound_path,
-        focus_sound_path=focus_sound_path,
-        text_align=text_align,
+        icon=kwargs.get('icon', None),
+        tooltip=kwargs.get('tooltip', None),
+        disabled=kwargs.get('disabled', False),
+        animation_speed=kwargs.get('animation_speed', 5),
+        hover_text=kwargs.get('hover_text', None),
+        sound_path=kwargs.get('sound_path', None),
+        hover_sound_path=kwargs.get('hover_sound_path', None),
+        focus_sound_path=kwargs.get('focus_sound_path', None),
+        text_align=kwargs.get('text_align', 'center'),
         shape=shape,
         shape_params=shape_params,
-        badge_text=badge_text,
-        badge_color=badge_color,
-        badge_position=badge_position,
-        shortcut_key=shortcut_key,
-        toggle_mode=toggle_mode,
-        toggled=toggled,
-        toggle_color=toggle_color,
-        focus_color=focus_color,
-        focus_border_color=focus_border_color,
-        translation_func=translation_func
+        badge_text=kwargs.get('badge_text', None),
+        badge_color=kwargs.get('badge_color', (255, 0, 0)),
+        badge_position=kwargs.get('badge_position', 'topright'),
+        shortcut_key=kwargs.get('shortcut_key', None),
+        toggle_mode=kwargs.get('toggle_mode', False),
+        toggled=kwargs.get('toggled', False),
+        toggle_color=kwargs.get('toggle_color', (160, 160, 200)),
+        focus_color=kwargs.get('focus_color', (200, 200, 255)),
+        focus_border_color=kwargs.get('focus_border_color', (100, 100, 255)),
+        translation_func=kwargs.get('translation_func', None)
     )
 
+    # Add to button group if provided
+    button_group = kwargs.get('button_group', None)
     if button_group:
         button_group.add(button)
 
     return button
 
 
-def create_slider(screen, font, width=200, height=30,
-                  min_value=0, max_value=100, current_value=50,
-                  step=1, label=None, y_offset=0, x_offset=0,
-                  bg_color=(80, 80, 80), hover_color=(100, 100, 150),
-                  text_color=(220, 220, 220), focus_color=(120, 120, 200),
-                  disabled=False, tooltip=None,
-                  sound_path=None, hover_sound_path=None, focus_sound_path=None):
+def create_slider(screen, font, **kwargs):
     """
     Create a slider with customizable parameters.
 
-    Args:
-        screen: The pygame surface to draw on
-        font: Font for value text
-        width: Width of slider track
-        height: Height of slider track
-        min_value: Minimum value of slider
-        max_value: Maximum value of slider
-        current_value: Starting value
-        step: Step increments (0 for continuous)
-        label: Optional text label for the slider
-        y_offset, x_offset: Position offsets from center of screen
-        bg_color: Background color for the slider track
-        hover_color: Color when hovered
-        text_color: Color for label and value text
-        focus_color: Color when slider has keyboard focus
-        disabled: Whether slider is interactive
-        tooltip: Tooltip text
-        sound_path: Sound when clicked
-        hover_sound_path: Sound when hovered
-        focus_sound_path: Sound when focused with keyboard
+    Required params:
+      screen: The pygame surface to draw on
+      font: Font for value text
 
-    Returns:
-        SliderButton instance
+    Optional params (passed as kwargs):
+      x, y: Direct position coordinates
+      width, height: Slider dimensions
+      x_offset, y_offset: Position offsets from center
+      min_value, max_value, current_value: Slider range and position
+      music_manager: MusicManager instance for volume control
     """
+    # Extract basic parameters
+    x = kwargs.get('x', None)
+    y = kwargs.get('y', None)
+    width = kwargs.get('width', 200)
+    height = kwargs.get('height', 30)
+    x_offset = kwargs.get('x_offset', 0)
+    y_offset = kwargs.get('y_offset', 0)
+
+    # Extract slider specific parameters
+    min_value = kwargs.get('min_value', 0)
+    max_value = kwargs.get('max_value', 100)
+    current_value = kwargs.get('current_value', 50)
+    step = kwargs.get('step', 1)
+    label = kwargs.get('label', None)
+
+    # Remove music_manager from kwargs so it won't be passed to SliderButton
+    if 'music_manager' in kwargs:
+        kwargs.pop('music_manager')
+
+    # Calculate position
     screen_width, screen_height = screen.get_size()
+    if x is not None and y is not None:
+        # Use direct position if provided
+        slider_x, slider_y = x, y
+    else:
+        # Center with offsets
+        slider_x = screen_width // 2 - width // 2 + x_offset
+        slider_y = screen_height // 2 + y_offset
 
-    # Calculate x, y position with offsets from center
-    x = screen_width // 2 - width // 2 + x_offset
-    y = screen_height // 2 + y_offset
-
+    # Create the slider
     slider = SliderButton(
         screen=screen,
         font=font,
-        x=x,
-        y=y,
+        x=slider_x,
+        y=slider_y,
         width=width,
         height=height,
         min_value=min_value,
@@ -160,15 +195,10 @@ def create_slider(screen, font, width=200, height=30,
         current_value=current_value,
         step=step,
         label=label,
-        bg_color=bg_color,
-        hover_color=hover_color,
-        text_color=text_color,
-        focus_color=focus_color,
-        disabled=disabled,
-        tooltip=tooltip,
-        sound_path=sound_path,
-        hover_sound_path=hover_sound_path,
-        focus_sound_path=focus_sound_path
+        **{k: v for k, v in kwargs.items() if k not in ['x', 'y', 'width', 'height',
+                                                        'x_offset', 'y_offset',
+                                                        'min_value', 'max_value',
+                                                        'current_value', 'step', 'label']}
     )
 
     return slider

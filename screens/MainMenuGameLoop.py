@@ -1,7 +1,8 @@
 import pygame
 import os
 from buttons.ButtonClass import Button
-from buttons.ButtonCreator import create_button
+from buttons.ButtonCreator import create_button, create_slider
+from utility.MusicManager import MusicManager
 
 # Colors
 BACKGROUND = (40, 44, 52)
@@ -14,8 +15,15 @@ click_sound_path = os.path.join("assets", "audio", "click.wav")
 hover_sound_path = os.path.join("assets", "audio", "hover.wav")
 focus_sound_path = os.path.join("assets", "audio", "focus.wav")
 
+# Music file path
+background_music_path = os.path.join("assets", "audio", "background_music.mp3")
+
 # Global settings
 fps_display_enabled = False
+music_enabled = True
+
+# Initialize music manager
+music_manager = MusicManager()
 
 
 def RunSettingsMenuLoop():
@@ -37,7 +45,9 @@ def RunSettingsMenuLoop():
     # Initialize button variables
     back_btn = None
     fullscreen_btn = None
-    fps_btn = None  # New button for FPS toggle
+    fps_btn = None
+    music_toggle_btn = None
+    volume_slider = None
 
     # Store original background image
     original_bg = None
@@ -45,7 +55,7 @@ def RunSettingsMenuLoop():
     bg_pos = (0, 0)
 
     # Access global settings
-    global fps_display_enabled
+    global fps_display_enabled, music_enabled
 
     # Get current fullscreen state
     is_fullscreen = screen.get_flags() & pygame.FULLSCREEN
@@ -96,53 +106,89 @@ def RunSettingsMenuLoop():
 
     # Function to recreate and reposition buttons
     def recreate_buttons():
-        nonlocal back_btn, fullscreen_btn, fps_btn
+        nonlocal back_btn, fullscreen_btn, fps_btn, music_toggle_btn, volume_slider
 
         # Back button in top left
         back_btn = create_button(
-            screen, button_font, width=120, height=40,
+            screen, button_font, "← Back",
+            width=120, height=40,
             x_offset=-screen_width // 2 + 80, y_offset=-screen_height // 2 + 40,
-            text="← Back",
             hover_text="← Return",
             hover_text_color=HOVER_TEXT_COLOR,
             tooltip="Return to main menu",
             sound_path=sound_path,
             hover_sound_path=hover_sound,
-            visible_background=True
+            visible_background=True,
+            music_manager=music_manager
         )
 
         # Fullscreen toggle button
         fullscreen_text = "Fullscreen: ON" if is_fullscreen else "Fullscreen: OFF"
         fullscreen_btn = create_button(
-            screen, button_font, width=250, height=50,
-            y_offset=-20, text=fullscreen_text,
+            screen, button_font, fullscreen_text,
+            width=250, height=50,
+            y_offset=-20,
             hover_text="Toggle Fullscreen Mode",
             hover_text_color=HOVER_TEXT_COLOR,
             tooltip="Switch between windowed and fullscreen modes",
             sound_path=sound_path,
             hover_sound_path=hover_sound,
             toggle_mode=True,
-            toggled=is_fullscreen
+            toggled=is_fullscreen,
+            music_manager=music_manager
         )
 
         # FPS counter toggle button
         fps_text = "FPS Counter: ON" if fps_display_enabled else "FPS Counter: OFF"
         fps_btn = create_button(
-            screen, button_font, width=250, height=50,
-            y_offset=50, text=fps_text,
+            screen, button_font, fps_text,
+            width=250, height=50,
+            y_offset=50,
             hover_text="Toggle FPS Display",
             hover_text_color=HOVER_TEXT_COLOR,
             tooltip="Show or hide frames per second counter",
             sound_path=sound_path,
             hover_sound_path=hover_sound,
             toggle_mode=True,
-            toggled=fps_display_enabled
+            toggled=fps_display_enabled,
+            music_manager=music_manager
+        )
+
+        # Music toggle button
+        music_text = "Music: ON" if music_enabled else "Music: OFF"
+        music_toggle_btn = create_button(
+            screen, button_font, music_text,
+            width=250, height=50,
+            y_offset=120,
+            hover_text="Toggle Background Music",
+            hover_text_color=HOVER_TEXT_COLOR,
+            tooltip="Turn background music on or off",
+            sound_path=sound_path,
+            hover_sound_path=hover_sound,
+            toggle_mode=True,
+            toggled=music_enabled,
+            music_manager=music_manager
+        )
+
+        # Volume slider
+        volume_slider = create_slider(
+            screen, button_font,
+            width=250, height=30,
+            y_offset=180,
+            min_value=0, max_value=100,
+            current_value=int(music_manager.get_volume() * 100),
+            label="Music Volume",
+            sound_path=sound_path,
+            hover_sound_path=hover_sound,
+            music_manager=music_manager
         )
 
         # Button handlers
         back_btn.on_click = handle_back
         fullscreen_btn.on_click = handle_fullscreen_toggle
         fps_btn.on_click = handle_fps_toggle
+        music_toggle_btn.on_click = handle_music_toggle
+        volume_slider.on_value_change = handle_volume_change
 
         # Set focus on back button initially
         back_btn.set_focus(True)
@@ -181,6 +227,28 @@ def RunSettingsMenuLoop():
         # Update button text
         fps_text = "FPS Counter: ON" if fps_display_enabled else "FPS Counter: OFF"
         fps_btn.set_text(fps_text)
+        return True
+
+    def handle_music_toggle():
+        global music_enabled
+        music_enabled = not music_enabled
+
+        # Update button text
+        music_text = "Music: ON" if music_enabled else "Music: OFF"
+        music_toggle_btn.set_text(music_text)
+
+        # Start or stop music
+        if music_enabled:
+            if not music_manager.is_playing():
+                music_manager.play_music(background_music_path)
+        else:
+            music_manager.stop_music()
+
+        return True
+
+    def handle_volume_change(value):
+        volume = value / 100.0  # Convert to 0.0-1.0 range
+        music_manager.set_volume(volume)
         return True
 
     # Initial setup
@@ -229,6 +297,8 @@ def RunSettingsMenuLoop():
         back_btn.draw()
         fullscreen_btn.draw()
         fps_btn.draw()
+        music_toggle_btn.draw()
+        volume_slider.draw()
 
         # Draw instructions
         instructions = small_font.render("Press TAB to navigate, ENTER to select, ESC to go back, F11 for fullscreen",
@@ -263,6 +333,10 @@ def RunMainMenuLoop():
     # Check if sound files exist
     sound_path = click_sound_path if os.path.exists(click_sound_path) else None
     hover_sound = hover_sound_path if os.path.exists(hover_sound_path) else None
+
+    # Start background music if enabled
+    if music_enabled and os.path.exists(background_music_path):
+        music_manager.play_music(background_music_path)
 
     # Button dimensions
     button_width = 250
@@ -349,55 +423,61 @@ def RunMainMenuLoop():
 
         # Start Game button
         start_game_btn = create_button(
-            screen, button_font, width=button_width, height=button_height,
-            y_offset=-100, text="Start Game",
+            screen, button_font, "Start Game",
+            width=button_width, height=button_height,
+            y_offset=-100,
             hover_text="▶ Start Game ▶",
             hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Start a new game", sound_path=sound_path,
+            tooltip="Start a new game",
+            sound_path=sound_path,
             hover_sound_path=hover_sound,
             visible_background=False,
-            debug_hitbox=True
+            debug_hitbox=True,
+            music_manager=music_manager
         )
 
         # Load Game button (greyed out)
         load_game_btn = create_button(
-            screen, button_font, width=button_width, height=button_height,
+            screen, button_font, "Load Game",
+            width=button_width, height=button_height,
             y_offset=-100 + button_height + button_spacing,
-            text="Load Game",
             hover_text="Load Game (Unavailable)",
             hover_text_color=HOVER_TEXT_COLOR,
             tooltip="Load a saved game",
             visible_background=False,
             debug_hitbox=True,
-            disabled=True
+            disabled=True,
+            music_manager=music_manager
         )
 
         # Settings button
         settings_btn = create_button(
-            screen, button_font, width=button_width, height=button_height,
+            screen, button_font, "Settings",
+            width=button_width, height=button_height,
             y_offset=-100 + (button_height + button_spacing) * 2,
-            text="Settings",
             hover_text="⚙ Settings ⚙",
             hover_text_color=HOVER_TEXT_COLOR,
             tooltip="Game settings",
             sound_path=sound_path,
             hover_sound_path=hover_sound,
             visible_background=False,
-            debug_hitbox=True
+            debug_hitbox=True,
+            music_manager=music_manager
         )
 
         # Quit button
         quit_btn = create_button(
-            screen, button_font, width=button_width, height=button_height,
+            screen, button_font, "Quit",
+            width=button_width, height=button_height,
             y_offset=-100 + (button_height + button_spacing) * 3,
-            text="Quit",
             hover_text="✖ Exit Game ✖",
             hover_text_color=(255, 100, 100),
             tooltip="Exit the game",
             sound_path=sound_path,
             hover_sound_path=hover_sound,
             visible_background=False,
-            debug_hitbox=True
+            debug_hitbox=True,
+            music_manager=music_manager
         )
 
         # Button handlers

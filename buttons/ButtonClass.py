@@ -1,10 +1,13 @@
 import pygame
+from utility.MusicManager import MusicManager
 
 
 class Button:
     """A versatile button class for pygame interfaces with advanced features"""
 
+    instances = []  # For tracking button instances with text
     all_buttons = []  # Track all button instances for keyboard navigation
+    focused_button = None  # Track the currently focused button
 
     def __init__(self, rect, text, button_id, screen, font, on_click=None,
                  bg_color=(100, 100, 100), hover_color=(150, 150, 150),
@@ -17,11 +20,12 @@ class Button:
                  badge_text=None, badge_color=(255, 0, 0), badge_position="topright",
                  shortcut_key=None, toggle_mode=False, toggled=False, toggle_color=(160, 160, 200),
                  focus_color=(200, 200, 255), focus_border_color=(100, 100, 255),
-                 translation_func=None, animation_speed=5, hover_text=None):
+                 translation_func=None, animation_speed=5, hover_text=None,
+                 music_manager=None):
         """Initialize a new button"""
         self.rect = rect
         self.original_text = text
-        self.hover_text = hover_text or text  # New parameter for text when hovering
+        self.hover_text = hover_text or text
         self.text = text
         self.id = button_id
         self.screen = screen
@@ -30,7 +34,7 @@ class Button:
         self.bg_color = bg_color
         self.hover_color = hover_color
         self.text_color = text_color
-        self.hover_text_color = hover_text_color or text_color  # Added hover text color
+        self.hover_text_color = hover_text_color or text_color
         self.border_color = border_color
         self.border_width = border_width
         self.visible_background = visible_background
@@ -72,8 +76,12 @@ class Button:
         self.translation_func = translation_func
         self.group = None
 
-        # Add to global button list for keyboard navigation
+        # Music manager for volume control
+        self.music_manager = music_manager
+
+        # Add to global button lists
         Button.all_buttons.append(self)
+        Button.instances.append(self)
 
         # Load sounds if paths are provided
         self._load_sounds()
@@ -90,15 +98,12 @@ class Button:
 
             if self.sound_path:
                 self.click_sound = pygame.mixer.Sound(self.sound_path)
-                self.click_sound.set_volume(0.5)
 
             if self.hover_sound_path:
                 self.hover_sound = pygame.mixer.Sound(self.hover_sound_path)
-                self.hover_sound.set_volume(0.3)
 
             if self.focus_sound_path:
                 self.focus_sound = pygame.mixer.Sound(self.focus_sound_path)
-                self.focus_sound.set_volume(0.3)
 
             self.sounds_loaded = True
         except Exception as e:
@@ -125,7 +130,7 @@ class Button:
             # Use hover colors when mouse is over button
             bg_color = self.hover_color
             border_color = self.border_color
-            text_color = self.hover_text_color  # Use hover text color when hovering
+            text_color = self.hover_text_color
         else:
             # Use normal colors
             bg_color = self.bg_color
@@ -135,13 +140,11 @@ class Button:
         # Draw button background based on shape
         if self.visible_background:
             if self.shape == "rectangle":
-                # Standard rectangular button
                 pygame.draw.rect(self.screen, bg_color, self.rect, border_radius=5)
                 if self.border_width > 0:
                     pygame.draw.rect(self.screen, border_color, self.rect,
                                      width=self.border_width, border_radius=5)
             elif self.shape == "circle":
-                # Circular button
                 radius = self.shape_params.get("radius", min(self.rect.width, self.rect.height) // 2)
                 center = self.rect.center
                 pygame.draw.circle(self.screen, bg_color, center, radius)
@@ -149,7 +152,6 @@ class Button:
                     pygame.draw.circle(self.screen, border_color, center,
                                        radius, width=self.border_width)
             elif self.shape == "polygon":
-                # Polygon button (e.g., triangle)
                 points = self.shape_params.get("points", [])
                 if points:
                     pygame.draw.polygon(self.screen, bg_color, points)
@@ -349,7 +351,10 @@ class Button:
         if is_hovering and not was_hovering:
             # Just started hovering
             if self.hover_sound and self.sounds_loaded:
-                self.hover_sound.play()
+                if self.music_manager:
+                    self.music_manager.play_sound(self.hover_sound)
+                else:
+                    self.hover_sound.play()
             result = True
 
         # Handle mouse events
@@ -362,7 +367,10 @@ class Button:
             if self.clicked and is_hovering:
                 # Successful click
                 if self.click_sound and self.sounds_loaded:
-                    self.click_sound.play()
+                    if self.music_manager:
+                        self.music_manager.play_sound(self.click_sound)
+                    else:
+                        self.click_sound.play()
 
                 if self.toggle_mode:
                     # Toggle on/off if it's a toggle button
@@ -390,7 +398,10 @@ class Button:
             # Shortcut key
             if self.shortcut_key and event.key == self.shortcut_key:
                 if self.click_sound and self.sounds_loaded:
-                    self.click_sound.play()
+                    if self.music_manager:
+                        self.music_manager.play_sound(self.click_sound)
+                    else:
+                        self.click_sound.play()
 
                 if self.on_click:
                     self.on_click()
@@ -399,7 +410,10 @@ class Button:
             # Enter key for focused button
             elif self.focused and event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
                 if self.click_sound and self.sounds_loaded:
-                    self.click_sound.play()
+                    if self.music_manager:
+                        self.music_manager.play_sound(self.click_sound)
+                    else:
+                        self.click_sound.play()
 
                 if self.toggle_mode:
                     # Toggle on/off if it's a toggle button
@@ -482,11 +496,17 @@ class Button:
 
             # Set focus on this button
             self.focused = True
+            Button.focused_button = self
             if self.focus_sound and self.sounds_loaded:
-                self.focus_sound.play()
+                if self.music_manager:
+                    self.music_manager.play_sound(self.focus_sound)
+                else:
+                    self.focus_sound.play()
             return True
         elif not focused and self.focused:
             self.focused = False
+            if Button.focused_button == self:
+                Button.focused_button = None
             return True
 
         return False
@@ -539,6 +559,13 @@ class Button:
             if event and button.handle_event(event):
                 result = True
         return result
+
+    @staticmethod
+    def clear_all():
+        """Clear all button instances"""
+        Button.all_buttons.clear()
+        Button.instances.clear()
+        Button.focused_button = None
 
 
 class ButtonGroup:
