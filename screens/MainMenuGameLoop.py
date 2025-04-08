@@ -397,7 +397,7 @@ class MainMenu(MenuBase):
         """Create and position all buttons for the main menu."""
         self.start_game_btn = create_button(
             self.screen, self.button_font, "Start Game",
-            width=self.button_width, height=self.button_height,
+            width=self.button_width-75, height=self.button_height,
             y_offset=-100,
             hover_text="▶ Start Game ▶",
             hover_text_color=HOVER_TEXT_COLOR,
@@ -405,7 +405,7 @@ class MainMenu(MenuBase):
             sound_path=self.click_sound_path,
             hover_sound_path=self.hover_sound_path,
             visible_background=False,
-            debug_hitbox=False,
+            debug_hitbox=True,
             music_manager=self.config.music_manager
         )
         self.load_game_btn = create_button(
