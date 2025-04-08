@@ -14,6 +14,9 @@ click_sound_path = os.path.join("assets", "audio", "click.wav")
 hover_sound_path = os.path.join("assets", "audio", "hover.wav")
 focus_sound_path = os.path.join("assets", "audio", "focus.wav")
 
+# Global settings
+fps_display_enabled = False
+
 
 def RunSettingsMenuLoop():
     # Get the screen that was already created
@@ -34,11 +37,15 @@ def RunSettingsMenuLoop():
     # Initialize button variables
     back_btn = None
     fullscreen_btn = None
+    fps_btn = None  # New button for FPS toggle
 
     # Store original background image
     original_bg = None
     background_image = None
     bg_pos = (0, 0)
+
+    # Access global settings
+    global fps_display_enabled
 
     # Get current fullscreen state
     is_fullscreen = screen.get_flags() & pygame.FULLSCREEN
@@ -89,12 +96,12 @@ def RunSettingsMenuLoop():
 
     # Function to recreate and reposition buttons
     def recreate_buttons():
-        nonlocal back_btn, fullscreen_btn
+        nonlocal back_btn, fullscreen_btn, fps_btn
 
         # Back button in top left
         back_btn = create_button(
             screen, button_font, width=120, height=40,
-            x_offset=-screen_width//2 + 80, y_offset=-screen_height//2 + 40,
+            x_offset=-screen_width // 2 + 80, y_offset=-screen_height // 2 + 40,
             text="← Back",
             hover_text="← Return",
             hover_text_color=HOVER_TEXT_COLOR,
@@ -108,7 +115,7 @@ def RunSettingsMenuLoop():
         fullscreen_text = "Fullscreen: ON" if is_fullscreen else "Fullscreen: OFF"
         fullscreen_btn = create_button(
             screen, button_font, width=250, height=50,
-            y_offset=0, text=fullscreen_text,
+            y_offset=-20, text=fullscreen_text,
             hover_text="Toggle Fullscreen Mode",
             hover_text_color=HOVER_TEXT_COLOR,
             tooltip="Switch between windowed and fullscreen modes",
@@ -118,9 +125,24 @@ def RunSettingsMenuLoop():
             toggled=is_fullscreen
         )
 
+        # FPS counter toggle button
+        fps_text = "FPS Counter: ON" if fps_display_enabled else "FPS Counter: OFF"
+        fps_btn = create_button(
+            screen, button_font, width=250, height=50,
+            y_offset=50, text=fps_text,
+            hover_text="Toggle FPS Display",
+            hover_text_color=HOVER_TEXT_COLOR,
+            tooltip="Show or hide frames per second counter",
+            sound_path=sound_path,
+            hover_sound_path=hover_sound,
+            toggle_mode=True,
+            toggled=fps_display_enabled
+        )
+
         # Button handlers
         back_btn.on_click = handle_back
         fullscreen_btn.on_click = handle_fullscreen_toggle
+        fps_btn.on_click = handle_fps_toggle
 
         # Set focus on back button initially
         back_btn.set_focus(True)
@@ -152,6 +174,15 @@ def RunSettingsMenuLoop():
 
         return True
 
+    def handle_fps_toggle():
+        global fps_display_enabled
+        fps_display_enabled = not fps_display_enabled
+
+        # Update button text
+        fps_text = "FPS Counter: ON" if fps_display_enabled else "FPS Counter: OFF"
+        fps_btn.set_text(fps_text)
+        return True
+
     # Initial setup
     load_background_image()
     recreate_buttons()
@@ -167,7 +198,7 @@ def RunSettingsMenuLoop():
 
         # Draw title
         title_text = title_font.render("Settings", True, TEXT_COLOR)
-        title_rect = title_text.get_rect(center=(screen_width//2, 80))
+        title_rect = title_text.get_rect(center=(screen_width // 2, 80))
         screen.blit(title_text, title_rect)
 
         # Process events
@@ -190,14 +221,25 @@ def RunSettingsMenuLoop():
                     running = False
                 elif event.key == pygame.K_ESCAPE:
                     running = False
+                elif event.key == pygame.K_F11:
+                    # F11 to toggle fullscreen
+                    handle_fullscreen_toggle()
 
         # Draw all buttons
         back_btn.draw()
         fullscreen_btn.draw()
+        fps_btn.draw()
 
         # Draw instructions
-        instructions = small_font.render("Press TAB to navigate, ENTER to select, ESC to go back", True, TEXT_COLOR)
+        instructions = small_font.render("Press TAB to navigate, ENTER to select, ESC to go back, F11 for fullscreen",
+                                         True, TEXT_COLOR)
         screen.blit(instructions, (screen_width // 2 - instructions.get_width() // 2, screen_height - 40))
+
+        # Draw FPS counter if enabled
+        if fps_display_enabled:
+            fps = int(clock.get_fps())
+            fps_text = small_font.render(f"FPS: {fps}", True, (255, 255, 0))
+            screen.blit(fps_text, (10, 10))
 
         pygame.display.flip()
         clock.tick(60)
@@ -237,6 +279,9 @@ def RunMainMenuLoop():
     original_bg = None
     background_image = None
     bg_pos = (0, 0)
+
+    # Track fullscreen state
+    is_fullscreen = screen.get_flags() & pygame.FULLSCREEN
 
     # Function to load and scale background image
     def load_background_image():
@@ -281,6 +326,22 @@ def RunMainMenuLoop():
             print(f"Error loading background: {e}")
             background_image = None
             bg_pos = (0, 0)
+
+    # Function to toggle fullscreen mode
+    def toggle_fullscreen():
+        nonlocal is_fullscreen
+        is_fullscreen = not is_fullscreen
+
+        # Toggle fullscreen mode
+        if is_fullscreen:
+            pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        else:
+            pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+
+        # Reload background and recreate buttons to match new screen size
+        Button.all_buttons.clear()
+        load_background_image()
+        recreate_buttons()
 
     # Function to recreate and reposition buttons
     def recreate_buttons():
@@ -399,9 +460,13 @@ def RunMainMenuLoop():
             # Handle button events
             Button.update_all(event)
 
-            # Global keyboard shortcut
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
-                running = False
+            # Global keyboard shortcuts
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    running = False
+                elif event.key == pygame.K_F11:
+                    # F11 to toggle fullscreen
+                    toggle_fullscreen()
 
         # Draw all buttons
         start_game_btn.draw()
@@ -410,8 +475,15 @@ def RunMainMenuLoop():
         quit_btn.draw()
 
         # Draw instructions
-        instructions = small_font.render("Press TAB to navigate, ENTER to select, Q to quit", True, TEXT_COLOR)
+        instructions = small_font.render("Press TAB to navigate, ENTER to select, Q to quit, F11 for fullscreen", True,
+                                         TEXT_COLOR)
         screen.blit(instructions, (screen_width // 2 - instructions.get_width() // 2, screen_height - 40))
+
+        # Draw FPS counter if enabled
+        if fps_display_enabled:
+            fps = int(clock.get_fps())
+            fps_text = small_font.render(f"FPS: {fps}", True, (255, 255, 0))
+            screen.blit(fps_text, (10, 10))
 
         pygame.display.flip()
         clock.tick(60)
