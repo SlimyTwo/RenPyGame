@@ -7,6 +7,7 @@ from engine.resource_manager import ResourceManager
 from engine.WindowCreationHandler import initialize_window
 
 class Game:
+    # Constructor
     def __init__(self):
         print(" Entering Constructor...")
         self.running = False

@@ -11,7 +11,6 @@ from engine.config import (
 class WindowManager:
     """Class to handle window creation and management of a Pygame window."""
 
-    # Constructor
     def __init__(self) -> None:
         """
         Initialize the WindowManager with no active screen, font, or background.
@@ -24,8 +23,8 @@ class WindowManager:
         """
         Initialize Pygame and create the main game window.
 
-        :return: The Pygame display surface representing the game window.
-        :rtype: pygame.Surface
+        Returns:
+            pygame.Surface: The Pygame display surface representing the game window.
         """
         pygame.init()
         pygame.mixer.init()
@@ -50,8 +49,8 @@ class WindowManager:
         """
         Retrieve the current Pygame display surface.
 
-        :return: The current screen surface if available, otherwise None.
-        :rtype: Optional[pygame.Surface]
+        Returns:
+            Optional[pygame.Surface]: The current screen surface if available, otherwise None.
         """
         return self.screen
 
@@ -59,8 +58,8 @@ class WindowManager:
         """
         Retrieve the default font loaded for text rendering.
 
-        :return: The loaded Pygame font if available, otherwise None.
-        :rtype: Optional[pygame.font.Font]
+        Returns:
+            Optional[pygame.font.Font]: The loaded Pygame font if available, otherwise None.
         """
         return self.font
 
@@ -68,21 +67,21 @@ class WindowManager:
         """
         Retrieve the loaded background image.
 
-        :return: The background surface if loading succeeded, otherwise None.
-        :rtype: Optional[pygame.Surface]
+        Returns:
+            Optional[pygame.Surface]: The background surface if loading succeeded, otherwise None.
         """
         return self.background
 
 
 # Create a default instance for easy, global-like access
-window_manager = WindowManager()
+window_manager: WindowManager = WindowManager()
 
 def initialize_window() -> pygame.Surface:
     """
     Compatibility function to initialize the Pygame window using WindowManager.
 
-    :return: The created Pygame screen surface.
-    :rtype: pygame.Surface
+    Returns:
+        pygame.Surface: The created Pygame screen surface.
     """
     return window_manager.initialize_window()
 
