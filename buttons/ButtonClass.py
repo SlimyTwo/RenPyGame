@@ -8,6 +8,7 @@ class Button:
     instances = []  # For tracking button instances with text
     all_buttons = []  # Track all button instances for keyboard navigation
     focused_button = None  # Track the currently focused button
+    all_sliders = []  # Track all slider instances for keyboard navigation
 
     def __init__(self, rect, text, button_id, screen, font, on_click=None,
                  bg_color=(100, 100, 100), hover_color=(150, 150, 150),
@@ -555,9 +556,16 @@ class Button:
     def update_all(cls, event=None):
         """Update all buttons in one call - useful for keyboard navigation"""
         result = False
+        # Handle regular buttons
         for button in cls.all_buttons:
             if event and button.handle_event(event):
                 result = True
+                
+        # Handle sliders (without using pygame.event.get_listeners())
+        for slider in cls.all_sliders:
+            if event and slider.handle_event(event):
+                result = True
+                
         return result
 
     @staticmethod
@@ -566,6 +574,7 @@ class Button:
         Button.all_buttons.clear()
         Button.instances.clear()
         Button.focused_button = None
+        Button.all_sliders.clear()
 
 
 class ButtonGroup:
@@ -620,3 +629,4 @@ class ButtonGroup:
             self.selected = None
             return True
         return False
+

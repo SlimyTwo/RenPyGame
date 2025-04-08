@@ -282,6 +282,10 @@ def RunSettingsMenuLoop():
 
             # Handle button events
             Button.update_all(event)
+            
+            # Handle slider events directly
+            if volume_slider:
+                volume_slider.handle_event(event)
 
             # Keyboard shortcuts
             if event.type == pygame.KEYDOWN:

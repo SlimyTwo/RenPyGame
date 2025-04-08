@@ -1,4 +1,5 @@
 import pygame
+from buttons.ButtonClass import Button
 
 
 class SliderButton:
@@ -55,6 +56,9 @@ class SliderButton:
                 self.focus_sound = pygame.mixer.Sound(focus_sound_path)
             except:
                 print(f"Could not load sound: {focus_sound_path}")
+
+        # Register with Button's slider list for event handling
+        Button.all_sliders.append(self)
 
     def draw(self):
         # Draw the slider track with rounded corners
@@ -174,3 +178,4 @@ class SliderButton:
         if focus and not self.has_focus and self.focus_sound:
             self.focus_sound.play()
         self.has_focus = focus
+
