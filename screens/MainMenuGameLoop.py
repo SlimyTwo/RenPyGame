@@ -43,6 +43,8 @@ class MenuBase:
     Base class for menu screens with common functionality.
     All menus receive a GameConfig instance as a dependency.
     """
+
+    # Constructor
     def __init__(self, config: GameConfig) -> None:
         self.config = config
         self.screen = pygame.display.get_surface()
@@ -192,7 +194,7 @@ class SettingsMenu(MenuBase):
         """
         # Back button (top left)
         self.back_btn = create_button(
-            self.screen, self.button_font, "← Back",
+            self.screen, self.button_font, "<- Back",
             width=120, height=40,
             x_offset=-self.screen_width // 2 + 80, y_offset=-self.screen_height // 2 + 40,
             hover_text="← Return",
