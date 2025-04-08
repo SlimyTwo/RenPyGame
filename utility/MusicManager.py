@@ -1,5 +1,6 @@
 import pygame
 import os
+from utility.SettingsManager import SettingsManager
 
 
 class MusicManager:
@@ -8,9 +9,13 @@ class MusicManager:
         if not pygame.mixer.get_init():
             pygame.mixer.init()
 
+        # Create settings manager
+        self.settings_manager = SettingsManager()
+
         # Volume settings (0.0 to 1.0)
-        self.music_volume = 0.7  # Default music volume
-        self.sfx_volume = 0.7  # Default sound effects volume
+        self.music_volume = self.settings_manager.get_setting("music_volume", 100) / 100.0
+        self.sfx_volume = self.settings_manager.get_setting("sfx_volume", 100) / 100.0
+        self.music_enabled = self.settings_manager.get_setting("music_enabled", True)
 
         # Track current music
         self.current_music = None
@@ -20,6 +25,9 @@ class MusicManager:
         """Play background music with optional looping and fade-in"""
         if not os.path.exists(music_path):
             print(f"Warning: Music file not found: {music_path}")
+            return False
+
+        if not self.music_enabled:
             return False
 
         try:
@@ -65,6 +73,9 @@ class MusicManager:
         volume = max(0.0, min(1.0, volume))
         self.music_volume = volume
         pygame.mixer.music.set_volume(volume)
+        
+        # Save to settings (convert to 0-100 range for settings)
+        self.settings_manager.set_setting("music_volume", int(volume * 100))
 
     def set_music_volume(self, volume):
         """Alias for set_volume for clarity"""
@@ -79,6 +90,21 @@ class MusicManager:
         # Ensure volume is between 0 and 1
         volume = max(0.0, min(1.0, volume))
         self.sfx_volume = volume
+        
+        # Save to settings (convert to 0-100 range for settings)
+        self.settings_manager.set_setting("sfx_volume", int(volume * 100))
+
+    def set_music_enabled(self, enabled):
+        """Enable or disable music"""
+        self.music_enabled = enabled
+        self.settings_manager.set_setting("music_enabled", enabled)
+        
+        # Stop music if disabled
+        if not enabled and self.is_playing():
+            self.stop_music()
+        # Start music if enabled and we have a current track
+        elif enabled and self.current_music and not self.is_playing():
+            self.play_music(self.current_music)
 
     def play_sound(self, sound, volume=None):
         """Play a sound effect with proper volume"""

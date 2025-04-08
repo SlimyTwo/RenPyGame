@@ -18,12 +18,12 @@ focus_sound_path = os.path.join("assets", "audio", "focus.wav")
 # Music file path
 background_music_path = os.path.join("assets", "audio", "background_music.mp3")
 
-# Global settings
-fps_display_enabled = False
-music_enabled = True
-
 # Initialize music manager
 music_manager = MusicManager()
+
+# Global settings - now loaded from settings manager
+fps_display_enabled = music_manager.settings_manager.get_setting("fps_display", False)
+music_enabled = music_manager.settings_manager.get_setting("music_enabled", True)
 
 
 def RunSettingsMenuLoop():
@@ -170,7 +170,7 @@ def RunSettingsMenuLoop():
             music_manager=music_manager
         )
 
-        # Volume slider
+        # Volume slider - use saved volume value
         volume_slider = create_slider(
             screen, button_font,
             width=250, height=30,
@@ -202,6 +202,9 @@ def RunSettingsMenuLoop():
     def handle_fullscreen_toggle():
         nonlocal is_fullscreen, fullscreen_btn
         is_fullscreen = not is_fullscreen
+        
+        # Save fullscreen setting
+        music_manager.settings_manager.set_setting("fullscreen", is_fullscreen)
 
         # Update button text
         fullscreen_text = "Fullscreen: ON" if is_fullscreen else "Fullscreen: OFF"
@@ -223,6 +226,9 @@ def RunSettingsMenuLoop():
     def handle_fps_toggle():
         global fps_display_enabled
         fps_display_enabled = not fps_display_enabled
+        
+        # Save fps display setting
+        music_manager.settings_manager.set_setting("fps_display", fps_display_enabled)
 
         # Update button text
         fps_text = "FPS Counter: ON" if fps_display_enabled else "FPS Counter: OFF"
@@ -232,6 +238,9 @@ def RunSettingsMenuLoop():
     def handle_music_toggle():
         global music_enabled
         music_enabled = not music_enabled
+        
+        # Update music_enabled in music manager
+        music_manager.set_music_enabled(music_enabled)
 
         # Update button text
         music_text = "Music: ON" if music_enabled else "Music: OFF"
@@ -338,6 +347,13 @@ def RunMainMenuLoop():
     sound_path = click_sound_path if os.path.exists(click_sound_path) else None
     hover_sound = hover_sound_path if os.path.exists(hover_sound_path) else None
 
+    # Apply fullscreen setting from saved settings
+    is_fullscreen = music_manager.settings_manager.get_setting("fullscreen", False)
+    if is_fullscreen and not (screen.get_flags() & pygame.FULLSCREEN):
+        pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    elif not is_fullscreen and (screen.get_flags() & pygame.FULLSCREEN):
+        pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+
     # Start background music if enabled
     if music_enabled and os.path.exists(background_music_path):
         music_manager.play_music(background_music_path)
@@ -409,6 +425,9 @@ def RunMainMenuLoop():
     def toggle_fullscreen():
         nonlocal is_fullscreen
         is_fullscreen = not is_fullscreen
+
+        # Save fullscreen setting
+        music_manager.settings_manager.set_setting("fullscreen", is_fullscreen)
 
         # Toggle fullscreen mode
         if is_fullscreen:
@@ -571,3 +590,4 @@ def RunMainMenuLoop():
 
         pygame.display.flip()
         clock.tick(60)
+
