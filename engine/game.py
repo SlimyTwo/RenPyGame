@@ -8,6 +8,7 @@ from engine.WindowCreationHandler import initialize_window
 
 class Game:
     def __init__(self):
+        print("Game constructor called: initializing base game structure...")
         self.running = False
         self.screen = None
         self.resources = ResourceManager()
@@ -35,6 +36,10 @@ class Game:
                 print(f"Warning: Main menu background image not found at {MAIN_MENU_BG}")
             
             self.running = True
+
+            # Print confirmation that init succeeded
+            print("Game.initialize() completed successfully.")
+
             return self
         except Exception as e:
             print(f"Error initializing game: {e}")
@@ -63,6 +68,7 @@ class Game:
         
     def quit(self):
         """Clean up and quit the game."""
+        print("Exiting game. Cleaning up and shutting down...")
         self.running = False
         pygame.quit()
         sys.exit(0)  # Use 0 to indicate normal exit
