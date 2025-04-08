@@ -55,10 +55,15 @@ class Game:
         """Run the main menu game loop."""
         try:
             print(" Entering run_main_menu()...")
-            from screens.MainMenuGameLoop import MainMenu
+            from screens.MainMenuGameLoop import MainMenu, GameConfig
+            from utility.MusicManager import MusicManager
             
-            # Create and run the main menu directly
-            menu = MainMenu()
+            # Create required dependencies
+            music_manager = MusicManager()
+            config = GameConfig(music_manager)
+            
+            # Create and run the main menu with proper configuration
+            menu = MainMenu(config)
             menu.run()
             
             # If we return from the menu and quit was selected
