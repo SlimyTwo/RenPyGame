@@ -5,6 +5,7 @@ import sys
 def main():
     """Initialize and run the game."""
     try:
+        print("Entering main function...")
         print("Starting Fantasy Falls...")
         
         # Create and initialize game
@@ -15,6 +16,7 @@ def main():
         
         # Clean up
         game.quit()
+        print("Exiting main function...")
     except Exception as e:
         print(f"Error running game: {e}")
         import traceback

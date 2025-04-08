@@ -8,15 +8,17 @@ from engine.WindowCreationHandler import initialize_window
 
 class Game:
     def __init__(self):
-        print("Game constructor called: initializing base game structure...")
+        print(" Entering Constructor...")
         self.running = False
         self.screen = None
         self.resources = ResourceManager()
         self.clock = None
+        print(" Exiting Constructor...")
         
     def initialize(self):
         """Initialize pygame and create window."""
         try:
+            print(" Entering Game.initialize()...")
             # Use the existing window creation function
             self.screen = initialize_window()
             
@@ -38,8 +40,8 @@ class Game:
             self.running = True
 
             # Print confirmation that init succeeded
-            print("Game.initialize() completed successfully.")
-
+            print(" Game.initialize() completed successfully.")
+            print(" Exiting Game.initialize()...")
             return self
         except Exception as e:
             print(f"Error initializing game: {e}")
@@ -51,6 +53,7 @@ class Game:
     def run_main_menu(self):
         """Run the main menu game loop."""
         try:
+            print(" Entering run_main_menu()...")
             from screens.MainMenuGameLoop import MainMenu
             
             # Create and run the main menu directly
@@ -60,6 +63,7 @@ class Game:
             # If we return from the menu and quit was selected
             if not menu.running:
                 self.running = False
+            print(" Exiting run_main_menu()...")
         except Exception as e:
             print(f"Error in main menu: {e}")
             import traceback

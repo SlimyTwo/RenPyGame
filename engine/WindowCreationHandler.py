@@ -11,6 +11,7 @@ from engine.config import (
 class WindowManager:
     """Class to handle window creation and management of a Pygame window."""
 
+    # Constructor
     def __init__(self) -> None:
         """
         Initialize the WindowManager with no active screen, font, or background.
