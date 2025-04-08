@@ -1,11 +1,28 @@
-import pygame
+"""Main entry point for the game."""
+from engine.game import Game
+import sys
 
-from utility.CompleteProgramTermination import ProgramTerminator
-from screens.RunningPygameBasics import RunningPygameBasics
-from screens.MainMenuGameLoop import RunMainMenuLoop
+def main():
+    """Initialize and run the game."""
+    try:
+        print("Starting Fantasy Falls...")
+        
+        # Create and initialize game
+        game = Game().initialize()
+        
+        # Run the main menu
+        game.run_main_menu()
+        
+        # Clean up
+        game.quit()
+    except Exception as e:
+        print(f"Error running game: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Keep the window open on error for debugging
+        input("Press Enter to close...")
+        sys.exit(1)
 
-RunningPygameBasics()
-
-RunMainMenuLoop()
-
-ProgramTerminator.terminate()
+if __name__ == "__main__":
+    main()
