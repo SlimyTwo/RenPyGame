@@ -1,2 +1,1 @@
 from .WindowCreationHandler import InitializeWindowCreation
-from .DisplayModeButton import DisplayModeButtonFunctionality
