@@ -1,0 +1,37 @@
+main.py
+└─► Main entry point:
+     └─► Calls Game.initialize() in game.py
+         ├─► engine/game.py (Game class)
+         │    ├─► initialize():
+         │    │     ├─► Calls WindowCreationHandler.initialize_window()
+         │    │     │     └─► (engine/WindowCreationHandler.py): Creates the Pygame window,
+         │    │     │           sets display size, caption, loads default font, and attempts to load the main menu background.
+         │    │     ├─► Sets up the clock (Pygame time management).
+         │    │     ├─► Creates a ResourceManager instance to load common assets
+         │    │     │     └─► (engine/resource_manager.py): Loads images, fonts, and sounds.
+         │    │     └─► Loads fonts and main menu background via asset paths defined in config.py.
+         │    ├─► run_main_menu():
+         │    │     ├─► Instantiates MusicManager (utility/MusicManager.py)
+         │    │     │     └─► Manages background music, volumes, and sound effects
+         │    │     ├─► Creates a GameConfig object (screens/MainMenuGameLoop.py)
+         │    │     │     └─► Retrieves settings (like fullscreen, FPS, and music status)
+         │    │     ├─► Instantiates MainMenu (screens/MainMenuGameLoop.py)
+         │    │     │     ├─► MainMenu:
+         │    │     │     │     ├─► Sets display mode (fullscreen/windowed) based on config
+         │    │     │     │     ├─► Plays background music if enabled
+         │    │     │     │     ├─► Loads the background image (using MainMenuGameLoop.load_background_image)
+         │    │     │     │     └─► Creates buttons (Start Game, Load Game, Settings, Quit) using create_button() from ButtonCreator.py
+         │    │     │     │           └─► Buttons are defined in buttons/ButtonClass.py (and extended by __initi__.py)
+         │    │     │     ├─► Provides event handling (keyboard/mouse) for navigation and activation.
+         │    │     │     └─► Offers an entry point to the SettingsMenu when the corresponding button is pressed.
+         │    │     └─► After MainMenu completes, game.running is updated.
+         │    └─► quit():
+         │          └─► Cleans up, exits Pygame, and terminates the program.
+         │
+         └─► Utility modules:
+              ├─► utility/SettingsManager.py
+              │     └─► Loads/Saves game settings (volume levels, fullscreen, FPS display) from a JSON file.
+              ├─► utility/TextCache.py
+              │     └─► Caches rendered text surfaces to optimize text rendering performance.
+              └─► engine/config.py
+                    └─► Contains global configuration settings (screen dimensions, colors, asset paths, font sizes).
