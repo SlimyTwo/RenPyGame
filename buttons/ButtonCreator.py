@@ -1,42 +1,52 @@
+import logging
+import os
+from typing import Any, Dict, Optional
+
 import pygame
 from buttons.ButtonClass import Button
-from buttons.SliderClass import SliderButton  # Add import for the slider
+from buttons.SliderClass import SliderButton
+
+logging.basicConfig(level=logging.DEBUG)
 
 
-def create_button(screen, font, text="Button", **kwargs):
+def create_button(screen: pygame.Surface, font: pygame.font.Font, text: str = "Button", **kwargs: Any) -> Button:
     """
     Create a button with customizable parameters.
 
-    Required params:
-      screen: The pygame surface to draw on
-      font: Font for button text
-      text: Button text label
+    Required parameters:
+      screen: The pygame surface to draw on.
+      font: The font for the button text.
+      text: The text displayed on the button.
 
-    Optional params (passed as kwargs):
-      x, y: Direct position coordinates
-      width, height: Button dimensions
-      x_offset, y_offset: Position offsets from center
-      on_click: Button click handler function
-      music_manager: MusicManager instance for volume control
+    Optional kwargs include:
+      x, y: Direct position coordinates.
+      width, height: Button dimensions.
+      x_offset, y_offset: Position offsets from the screen's center.
+      on_click: The callback function to execute on a click.
+      music_manager: MusicManager instance for sound management.
+      [Plus many other style or behavior overrides.]
+
+    Returns:
+      An instance of Button.
     """
-    # Extract position parameters
-    x = kwargs.get('x', None)
-    y = kwargs.get('y', None)
-    width = kwargs.get('width', 200)
-    height = kwargs.get('height', 50)
-    x_offset = kwargs.get('x_offset', 0)
-    y_offset = kwargs.get('y_offset', 0)
+    # Position and size parameters
+    x: Optional[int] = kwargs.get('x', None)
+    y: Optional[int] = kwargs.get('y', None)
+    width: int = kwargs.get('width', 200)
+    height: int = kwargs.get('height', 50)
+    x_offset: int = kwargs.get('x_offset', 0)
+    y_offset: int = kwargs.get('y_offset', 0)
 
-    # Extract music_manager
+    # Extract the music_manager dependency if provided
     music_manager = kwargs.get('music_manager', None)
 
-    # Create a safe button ID from the text (remove non-alphanumeric chars)
-    button_id = kwargs.get('button_id', f"btn_{''.join(c for c in text if c.isalnum() or c == '_')}")
+    # Create a safe button ID from the text (remove non-alphanumeric characters)
+    button_id: str = kwargs.get('button_id', f"btn_{''.join(c for c in text if c.isalnum() or c == '_')}")
 
-    # Handle string color names by converting to RGB tuples
-    debug_color = kwargs.get('debug_color', (255, 0, 0))
+    # Convert debug_color string to an RGB tuple if needed
+    debug_color: Any = kwargs.get('debug_color', (255, 0, 0))
     if isinstance(debug_color, str):
-        color_map = {
+        color_map: Dict[str, Any] = {
             "red": (255, 0, 0),
             "green": (0, 255, 0),
             "blue": (0, 0, 255),
@@ -50,13 +60,11 @@ def create_button(screen, font, text="Button", **kwargs):
         }
         debug_color = color_map.get(debug_color.lower(), (255, 0, 0))
 
-    # Create rect based on provided parameters
+    # Determine the button rectangle based on direct coordinates or centering with offsets
     screen_width, screen_height = screen.get_size()
     if x is not None and y is not None:
-        # Use direct position if provided
         button_rect = pygame.Rect(x, y, width, height)
     else:
-        # Center with offsets
         button_rect = pygame.Rect(
             screen_width // 2 - width // 2 + x_offset,
             screen_height // 2 + y_offset,
@@ -64,11 +72,11 @@ def create_button(screen, font, text="Button", **kwargs):
             height
         )
 
-    # Handle shape parameters
-    shape = kwargs.get('shape', 'rectangle')
-    shape_params = kwargs.get('shape_params', None)
+    # Handle shape parameters (rectangle, circle, polygon)
+    shape: str = kwargs.get('shape', 'rectangle')
+    shape_params: Optional[Dict[str, Any]] = kwargs.get('shape_params', None)
 
-    # For circle shape, calculate radius if not provided
+    # For circle shape, calculate default radius if not provided
     if shape == "circle" and (not shape_params or "radius" not in shape_params):
         radius = min(width, height) // 2
         shape_params = shape_params or {}
@@ -76,20 +84,19 @@ def create_button(screen, font, text="Button", **kwargs):
 
     # For polygon shape, set default triangle if no points provided
     if shape == "polygon" and (not shape_params or "points" not in shape_params):
-        # Default to a triangle as example
         center_x = button_rect.centerx
         center_y = button_rect.centery
         shape_params = shape_params or {}
         shape_params["points"] = [
-            (center_x, center_y - height // 2),  # Top
+            (center_x, center_y - height // 2),         # Top
             (center_x - width // 2, center_y + height // 2),  # Bottom left
             (center_x + width // 2, center_y + height // 2),  # Bottom right
         ]
 
-    # Extract on_click handler
-    on_click = kwargs.get('on_click', lambda: print(f"{text.splitlines()[0]} clicked!"))
+    # Extract on_click handler; default just prints a message
+    on_click = kwargs.get('on_click', lambda: logging.info(f"{text.splitlines()[0]} clicked!"))
 
-    # Create the button with all parameters
+    # Create the button instance with all parameters
     button = Button(
         rect=button_rect,
         text=text,
@@ -97,7 +104,7 @@ def create_button(screen, font, text="Button", **kwargs):
         screen=screen,
         font=font,
         on_click=on_click,
-        music_manager=music_manager,  # Add music_manager
+        music_manager=music_manager,
         bg_color=kwargs.get('bg_color', (120, 120, 120)),
         hover_color=kwargs.get('hover_color', (160, 160, 160)),
         text_color=kwargs.get('text_color', (255, 255, 255)),
@@ -130,7 +137,7 @@ def create_button(screen, font, text="Button", **kwargs):
         translation_func=kwargs.get('translation_func', None)
     )
 
-    # Add to button group if provided
+    # Add the button to a group if a button_group instance is passed
     button_group = kwargs.get('button_group', None)
     if button_group:
         button_group.add(button)
@@ -138,51 +145,57 @@ def create_button(screen, font, text="Button", **kwargs):
     return button
 
 
-def create_slider(screen, font, **kwargs):
+def create_slider(screen: pygame.Surface, font: pygame.font.Font, **kwargs: Any) -> SliderButton:
     """
     Create a slider with customizable parameters.
 
-    Required params:
-      screen: The pygame surface to draw on
-      font: Font for value text
+    Required parameters:
+      screen: The pygame surface to draw on.
+      font: The font used for slider value text.
 
-    Optional params (passed as kwargs):
-      x, y: Direct position coordinates
-      width, height: Slider dimensions
-      x_offset, y_offset: Position offsets from center
-      min_value, max_value, current_value: Slider range and position
-      music_manager: MusicManager instance for volume control
+    Optional kwargs include:
+      x, y: Direct position coordinates.
+      width, height: Slider dimensions.
+      x_offset, y_offset: Position offsets from center.
+      min_value, max_value, current_value: The slider's numerical range and current position.
+      label: An optional label text for the slider.
+      music_manager: This key is removed for slider instantiation.
+      [Other customizations may be provided.]
+
+    Returns:
+      An instance of SliderButton.
     """
-    # Extract basic parameters
-    x = kwargs.get('x', None)
-    y = kwargs.get('y', None)
-    width = kwargs.get('width', 200)
-    height = kwargs.get('height', 30)
-    x_offset = kwargs.get('x_offset', 0)
-    y_offset = kwargs.get('y_offset', 0)
+    # Basic positioning and size parameters
+    x: Optional[int] = kwargs.get('x', None)
+    y: Optional[int] = kwargs.get('y', None)
+    width: int = kwargs.get('width', 200)
+    height: int = kwargs.get('height', 30)
+    x_offset: int = kwargs.get('x_offset', 0)
+    y_offset: int = kwargs.get('y_offset', 0)
 
-    # Extract slider specific parameters
-    min_value = kwargs.get('min_value', 0)
-    max_value = kwargs.get('max_value', 100)
-    current_value = kwargs.get('current_value', 50)
-    step = kwargs.get('step', 1)
-    label = kwargs.get('label', None)
+    # Slider specific parameters
+    min_value: int = kwargs.get('min_value', 0)
+    max_value: int = kwargs.get('max_value', 100)
+    current_value: int = kwargs.get('current_value', 50)
+    step: int = kwargs.get('step', 1)
+    label: Optional[str] = kwargs.get('label', None)
 
-    # Remove music_manager from kwargs so it won't be passed to SliderButton
-    if 'music_manager' in kwargs:
-        kwargs.pop('music_manager')
+    # Remove music_manager from kwargs so it is not passed to SliderButton constructor.
+    kwargs.pop('music_manager', None)
 
-    # Calculate position
+    # Calculate slider position either directly or using center offsets
     screen_width, screen_height = screen.get_size()
     if x is not None and y is not None:
-        # Use direct position if provided
         slider_x, slider_y = x, y
     else:
-        # Center with offsets
         slider_x = screen_width // 2 - width // 2 + x_offset
         slider_y = screen_height // 2 + y_offset
 
-    # Create the slider
+    # Create the slider, forwarding any extra kwargs that are not explicitly extracted.
+    extra_kwargs = {
+        k: v for k, v in kwargs.items()
+        if k not in ['x', 'y', 'width', 'height', 'x_offset', 'y_offset', 'min_value', 'max_value', 'current_value', 'step', 'label']
+    }
     slider = SliderButton(
         screen=screen,
         font=font,
@@ -195,10 +208,6 @@ def create_slider(screen, font, **kwargs):
         current_value=current_value,
         step=step,
         label=label,
-        **{k: v for k, v in kwargs.items() if k not in ['x', 'y', 'width', 'height',
-                                                        'x_offset', 'y_offset',
-                                                        'min_value', 'max_value',
-                                                        'current_value', 'step', 'label']}
+        **extra_kwargs
     )
-
     return slider
