@@ -48,6 +48,7 @@ def RunSettingsMenuLoop():
     fps_btn = None
     music_toggle_btn = None
     volume_slider = None
+    master_volume_slider = None  # New slider for master volume
 
     # Store original background image
     original_bg = None
@@ -106,7 +107,7 @@ def RunSettingsMenuLoop():
 
     # Function to recreate and reposition buttons
     def recreate_buttons():
-        nonlocal back_btn, fullscreen_btn, fps_btn, music_toggle_btn, volume_slider
+        nonlocal back_btn, fullscreen_btn, fps_btn, music_toggle_btn, volume_slider, master_volume_slider
 
         # Back button in top left
         back_btn = create_button(
@@ -170,11 +171,24 @@ def RunSettingsMenuLoop():
             music_manager=music_manager
         )
 
-        # Volume slider - use saved volume value
+        # Master volume slider - add before music volume
+        master_volume_slider = create_slider(
+            screen, button_font,
+            width=250, height=30,
+            y_offset=200,  # Increased from 180 to 200
+            min_value=0, max_value=100,
+            current_value=int(music_manager.get_master_volume() * 100),
+            label="Master Volume",
+            sound_path=sound_path,
+            hover_sound_path=hover_sound,
+            music_manager=music_manager
+        )
+
+        # Music volume slider - move down
         volume_slider = create_slider(
             screen, button_font,
             width=250, height=30,
-            y_offset=180,
+            y_offset=280,  # Increased from 240 to 280 for more spacing
             min_value=0, max_value=100,
             current_value=int(music_manager.get_volume() * 100),
             label="Music Volume",
@@ -189,6 +203,7 @@ def RunSettingsMenuLoop():
         fps_btn.on_click = handle_fps_toggle
         music_toggle_btn.on_click = handle_music_toggle
         volume_slider.on_value_change = handle_volume_change
+        master_volume_slider.on_value_change = handle_master_volume_change  # Add handler for master volume
 
         # Set focus on back button initially
         back_btn.set_focus(True)
@@ -260,6 +275,11 @@ def RunSettingsMenuLoop():
         music_manager.set_volume(volume)
         return True
 
+    def handle_master_volume_change(value):
+        volume = value / 100.0  # Convert to 0.0-1.0 range
+        music_manager.set_master_volume(volume)
+        return True
+
     # Initial setup
     load_background_image()
     recreate_buttons()
@@ -295,6 +315,8 @@ def RunSettingsMenuLoop():
             # Handle slider events directly
             if volume_slider:
                 volume_slider.handle_event(event)
+            if master_volume_slider:
+                master_volume_slider.handle_event(event)
 
             # Keyboard shortcuts
             if event.type == pygame.KEYDOWN:
@@ -311,6 +333,7 @@ def RunSettingsMenuLoop():
         fullscreen_btn.draw()
         fps_btn.draw()
         music_toggle_btn.draw()
+        master_volume_slider.draw()  # Draw master volume slider
         volume_slider.draw()
 
         # Draw instructions

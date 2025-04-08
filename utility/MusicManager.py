@@ -13,6 +13,7 @@ class MusicManager:
         self.settings_manager = SettingsManager()
 
         # Volume settings (0.0 to 1.0)
+        self.master_volume = self.settings_manager.get_setting("master_volume", 100) / 100.0
         self.music_volume = self.settings_manager.get_setting("music_volume", 100) / 100.0
         self.sfx_volume = self.settings_manager.get_setting("sfx_volume", 100) / 100.0
         self.music_enabled = self.settings_manager.get_setting("music_enabled", True)
@@ -32,7 +33,9 @@ class MusicManager:
 
         try:
             pygame.mixer.music.load(music_path)
-            pygame.mixer.music.set_volume(self.music_volume)
+            # Apply both master and music volume
+            effective_volume = self.music_volume * self.master_volume
+            pygame.mixer.music.set_volume(effective_volume)
             pygame.mixer.music.play(loops=loops, fade_ms=fade_ms)
             self.current_music = music_path
             self.is_music_paused = False
@@ -67,15 +70,35 @@ class MusicManager:
         """Get the current music volume"""
         return self.music_volume
 
+    def get_master_volume(self):
+        """Get the current master volume"""
+        return self.master_volume
+
     def set_volume(self, volume):
         """Set the music volume (0.0 to 1.0)"""
         # Ensure volume is between 0 and 1
         volume = max(0.0, min(1.0, volume))
         self.music_volume = volume
-        pygame.mixer.music.set_volume(volume)
+        
+        # Apply both master and music volume
+        effective_volume = self.music_volume * self.master_volume
+        pygame.mixer.music.set_volume(effective_volume)
         
         # Save to settings (convert to 0-100 range for settings)
         self.settings_manager.set_setting("music_volume", int(volume * 100))
+
+    def set_master_volume(self, volume):
+        """Set the master volume (0.0 to 1.0)"""
+        # Ensure volume is between 0 and 1
+        volume = max(0.0, min(1.0, volume))
+        self.master_volume = volume
+        
+        # Apply both master and music volume to current music
+        effective_volume = self.music_volume * self.master_volume
+        pygame.mixer.music.set_volume(effective_volume)
+        
+        # Save to settings (convert to 0-100 range for settings)
+        self.settings_manager.set_setting("master_volume", int(volume * 100))
 
     def set_music_volume(self, volume):
         """Alias for set_volume for clarity"""
@@ -110,8 +133,10 @@ class MusicManager:
         """Play a sound effect with proper volume"""
         if sound:
             # Use specific volume if provided, otherwise use default sfx volume
+            # Apply master volume to all sound effects
             play_volume = volume if volume is not None else self.sfx_volume
-            sound.set_volume(play_volume)
+            effective_volume = play_volume * self.master_volume
+            sound.set_volume(effective_volume)
             sound.play()
 
     def load_sound(self, sound_path):

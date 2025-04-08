@@ -12,6 +12,7 @@ class SettingsManager:
         
         # Default settings
         self.default_settings = {
+            "master_volume": 100,
             "music_volume": 100,
             "sfx_volume": 100,
             "music_enabled": True,
@@ -73,3 +74,4 @@ class SettingsManager:
         """Reset all settings to defaults"""
         self.settings = self.default_settings.copy()
         self.save_settings()
+
