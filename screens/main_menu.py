@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 
 # Import your new ButtonBuilder instead of create_button
 from ui.builders.button_builder import ButtonBuilder
-
 from ui.components.button import Button
 from engine.music import MusicManager
 
@@ -385,207 +384,16 @@ class MainMenuState(MenuState):
         return True
 
 
-class SettingsMenuState(MenuState):
-    """
-    Settings menu state implementation
-    """
-    def __init__(self, menu_manager: MenuManager):
-        super().__init__(menu_manager)
-        self.title = "Settings Menu"
-
-    def create_buttons(self) -> None:
-        """Create settings menu buttons"""
-        base_menu = self.menu_manager.base_menu
-        config = base_menu.config
-        
-        # Button geometry and spacing
-        button_width = 250
-        button_height = 50
-        button_spacing = 20
-        
-        # Toggle music button
-        music_text = "Disable Music" if config.music_enabled else "Enable Music"
-        music_btn = (
-            ButtonBuilder(self.screen, self.button_font, text=music_text)
-            .set_size(button_width, button_height)
-            .set_offsets(0, -50)
-            .set_hover_text_color(HOVER_TEXT_COLOR)
-            .set_tooltip("Toggle background music")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
-            .set_visible_background(False)
-            .set_music_manager(config.music_manager)
-            .build()
-        )
-        music_btn.on_click = self.toggle_music
-        music_btn.set_focus(True)  # Initially focused
-        
-        # Toggle FPS display button
-        fps_text = "Hide FPS" if config.fps_display_enabled else "Show FPS"
-        fps_btn = (
-            ButtonBuilder(self.screen, self.button_font, text=fps_text)
-            .set_size(button_width, button_height)
-            .set_offsets(0, -50 + button_height + button_spacing)
-            .set_hover_text_color(HOVER_TEXT_COLOR)
-            .set_tooltip("Toggle FPS counter")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
-            .set_visible_background(False)
-            .set_music_manager(config.music_manager)
-            .build()
-        )
-        fps_btn.on_click = self.toggle_fps
-        
-        # Back to Main Menu button
-        back_btn = (
-            ButtonBuilder(self.screen, self.button_font, text="Back to Main Menu")
-            .set_size(button_width, button_height)
-            .set_offsets(0, -50 + (button_height + button_spacing) * 2)
-            .set_hover_text("⬅ Main Menu")
-            .set_hover_text_color(HOVER_TEXT_COLOR)
-            .set_tooltip("Return to main menu")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
-            .set_visible_background(False)
-            .set_music_manager(config.music_manager)
-            .build()
-        )
-        back_btn.on_click = lambda: self.menu_manager.transition_to("main")
-        
-        self.buttons = [music_btn, fps_btn, back_btn]
-
-    def handle_events(self, event: pygame.event.Event) -> bool:
-        """Handle events for this state"""
-        for button in self.buttons:
-            button.handle_event(event)
-        return False
-            
-    def draw(self) -> None:
-        """Draw the settings menu state"""
-        # Draw title
-        title_text = self.title_font.render(self.title, True, TEXT_COLOR)
-        self.screen.blit(
-            title_text,
-            (self.screen_width // 2 - title_text.get_width() // 2, 100)
-        )
-        
-        # Draw all buttons
-        for button in self.buttons:
-            button.draw()
-    
-    def toggle_music(self) -> bool:
-        """Toggle music on/off"""
-        config = self.menu_manager.base_menu.config
-        config.music_enabled = not config.music_enabled
-        config.music_manager.settings_manager.set_setting("music_enabled", config.music_enabled)
-        
-        if config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
-            config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
-        else:
-            config.music_manager.stop_music()
-            
-        # Update button text
-        self.buttons[0].text = "Disable Music" if config.music_enabled else "Enable Music"
-        return True
-        
-    def toggle_fps(self) -> bool:
-        """Toggle FPS display on/off"""
-        config = self.menu_manager.base_menu.config
-        config.fps_display_enabled = not config.fps_display_enabled
-        config.music_manager.settings_manager.set_setting("fps_display", config.fps_display_enabled)
-        
-        # Update button text
-        self.buttons[1].text = "Hide FPS" if config.fps_display_enabled else "Show FPS"
-        return True
-
-
-class TestMenuState(MenuState):
-    """
-    Test menu state implementation
-    """
-    def __init__(self, menu_manager: MenuManager):
-        super().__init__(menu_manager)
-        self.title = "Test Menu"
-
-    def create_buttons(self) -> None:
-        """Create test menu buttons"""
-        base_menu = self.menu_manager.base_menu
-        config = base_menu.config
-        
-        # Button geometry and spacing
-        button_width = 250
-        button_height = 50
-        button_spacing = 20
-        
-        # Example test button 1
-        test1_btn = (
-            ButtonBuilder(self.screen, self.button_font, text="Test Feature 1")
-            .set_size(button_width, button_height)
-            .set_offsets(0, -50)
-            .set_hover_text_color(HOVER_TEXT_COLOR)
-            .set_tooltip("Try test feature 1")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
-            .set_visible_background(False)
-            .set_music_manager(config.music_manager)
-            .build()
-        )
-        test1_btn.on_click = lambda: logging.info("Test feature 1 activated")
-        test1_btn.set_focus(True)  # Initially focused
-        
-        # Example test button 2
-        test2_btn = (
-            ButtonBuilder(self.screen, self.button_font, text="Test Feature 2")
-            .set_size(button_width, button_height)
-            .set_offsets(0, -50 + button_height + button_spacing)
-            .set_hover_text_color(HOVER_TEXT_COLOR)
-            .set_tooltip("Try test feature 2")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
-            .set_visible_background(False)
-            .set_music_manager(config.music_manager)
-            .build()
-        )
-        test2_btn.on_click = lambda: logging.info("Test feature 2 activated")
-        
-        # Back to Main Menu button
-        back_btn = (
-            ButtonBuilder(self.screen, self.button_font, text="Back to Main Menu")
-            .set_size(button_width, button_height)
-            .set_offsets(0, -50 + (button_height + button_spacing) * 2)
-            .set_hover_text("⬅ Main Menu")
-            .set_hover_text_color(HOVER_TEXT_COLOR)
-            .set_tooltip("Return to main menu")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
-            .set_visible_background(False)
-            .set_music_manager(config.music_manager)
-            .build()
-        )
-        back_btn.on_click = lambda: self.menu_manager.transition_to("main")
-        
-        self.buttons = [test1_btn, test2_btn, back_btn]
-
-    def handle_events(self, event: pygame.event.Event) -> bool:
-        """Handle events for this state"""
-        for button in self.buttons:
-            button.handle_event(event)
-        return False
-            
-    def draw(self) -> None:
-        """Draw the test menu state"""
-        # Draw title
-        title_text = self.title_font.render(self.title, True, TEXT_COLOR)
-        self.screen.blit(
-            title_text,
-            (self.screen_width // 2 - title_text.get_width() // 2, 100)
-        )
-        
-        # Draw all buttons
-        for button in self.buttons:
-            button.draw()
-
-
 class MainMenu(MenuBase):
     """
     Main menu controller class that manages menu states.
     """
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config)
+        
+        # Import the other menu states here to avoid circular imports
+        from screens.settings_menu import SettingsMenuState
+        from screens.test_menu import TestMenuState
         
         # Register all menu states
         self.menu_manager.register_state("main", MainMenuState)
@@ -611,4 +419,3 @@ def run_main_menu_loop():
     main_menu = MainMenu(config)
     main_menu.run()
     pygame.quit()
-
