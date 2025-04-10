@@ -1,6 +1,6 @@
 import pygame
 import os
-from utility.SettingsManager import SettingsManager
+from engine.settings import SettingsManager
 
 
 class MusicManager:

@@ -2,24 +2,21 @@
 import pygame
 import sys
 import os
-from engine.config import SCREEN_WIDTH, SCREEN_HEIGHT, GAME_TITLE, DEFAULT_FONT_SIZE, MAIN_MENU_BG
-from engine.resource_manager import ResourceManager
-from engine.WindowCreationHandler import initialize_window
+from config import DEFAULT_FONT_SIZE, MAIN_MENU_BG
+from engine.resource_loader import ResourceManager
+from engine.display import initialize_window
 
 class Game:
     # Constructor
     def __init__(self):
-        print(" Entering Constructor...")
         self.running = False
         self.screen = None
         self.resources = ResourceManager()
         self.clock = None
-        print(" Exiting Constructor...")
-        
+
     def initialize(self):
         """Initialize pygame and create window."""
         try:
-            print(" Entering Game.initialize()...")
             # Use the existing window creation function
             self.screen = initialize_window()
             
@@ -40,9 +37,6 @@ class Game:
             
             self.running = True
 
-            # Print confirmation that init succeeded
-            print(" Game.initialize() completed successfully.")
-            print(" Exiting Game.initialize()...")
             return self
         except Exception as e:
             print(f"Error initializing game: {e}")
@@ -54,9 +48,8 @@ class Game:
     def run_main_menu(self):
         """Run the main menu game loop."""
         try:
-            print(" Entering run_main_menu()...")
-            from screens.MainMenuGameLoop import MainMenu, GameConfig
-            from utility.MusicManager import MusicManager
+            from screens.main_menu import MainMenu, GameConfig
+            from engine.music import MusicManager
             
             # Create required dependencies
             music_manager = MusicManager()
@@ -69,7 +62,7 @@ class Game:
             # If we return from the menu and quit was selected
             if not menu.running:
                 self.running = False
-            print(" Exiting run_main_menu()...")
+
         except Exception as e:
             print(f"Error in main menu: {e}")
             import traceback

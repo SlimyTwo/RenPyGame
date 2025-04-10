@@ -2,7 +2,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pygame
-from utility.MusicManager import MusicManager
+from engine.music import MusicManager
 
 logging.basicConfig(level=logging.DEBUG)
 

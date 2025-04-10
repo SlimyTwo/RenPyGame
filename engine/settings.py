@@ -1,5 +1,6 @@
 import os
 import json
+from pathlib import Path
 
 class SettingsManager:
     """Handles saving and loading game settings"""
@@ -7,9 +8,10 @@ class SettingsManager:
     def __init__(self, settings_file="game_settings.json"):
         """Initialize the settings manager with default values"""
         # Base directory for settings file (same directory as the script)
-        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.settings_file = os.path.join(self.base_dir, settings_file)
-        
+        self.settings_dir = Path(__file__).resolve().parents[1] / "data"
+        self.settings_dir.mkdir(parents=True, exist_ok=True)
+        self.settings_file = self.settings_dir / settings_file
+
         # Default settings
         self.default_settings = {
             "master_volume": 100,

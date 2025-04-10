@@ -1,1 +1,1 @@
-from .WindowCreationHandler import InitializeWindowCreation
+from .display import InitializeWindowCreation

@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Callable, Tuple
 
 import pygame
-from buttons.ButtonClass import Button
+from ui.components.button import Button
 
 # Set up logging configuration
 logging.basicConfig(level=logging.DEBUG)

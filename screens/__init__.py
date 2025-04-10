@@ -1,2 +1,2 @@
-from .MainMenuGameLoop import RunMainMenuLoop
+from .main_menu import RunMainMenuLoop
 

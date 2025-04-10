@@ -1,8 +1,8 @@
 {
-    "master_volume": 18,
-    "music_volume": 14,
+    "master_volume": 64,
+    "music_volume": 54,
     "sfx_volume": 100,
     "music_enabled": true,
     "fullscreen": false,
-    "fps_display": true
+    "fps_display": false
 }

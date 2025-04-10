@@ -1,5 +1,5 @@
 """Main entry point for the game."""
-from engine.game import Game
+from game import Game
 import sys
 
 def main():

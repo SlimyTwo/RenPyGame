@@ -1,6 +1,6 @@
 import pygame
 from typing import Optional
-from engine.config import (
+from config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
     GAME_TITLE,

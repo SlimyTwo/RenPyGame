@@ -1,10 +1,9 @@
 import logging
-import os
 from typing import Any, Dict, Optional
 
 import pygame
-from buttons.ButtonClass import Button
-from buttons.SliderClass import SliderButton
+from ui.components.button import Button
+from ui.components.slider import SliderButton
 
 logging.basicConfig(level=logging.DEBUG)
 

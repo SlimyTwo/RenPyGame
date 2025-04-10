@@ -3,9 +3,9 @@ import logging
 from typing import Optional
 
 import pygame
-from buttons.ButtonClass import Button
-from buttons.ButtonCreator import create_button, create_slider
-from utility.MusicManager import MusicManager
+from ui.components.button import Button
+from ui.factories.button_factory import create_button, create_slider
+from engine.music import MusicManager
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -543,6 +543,3 @@ def run_main_menu_loop_game(game):
     pygame.quit()
     return result
 
-
-if __name__ == '__main__':
-    run_main_menu_loop()
