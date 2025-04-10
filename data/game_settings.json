@@ -4,5 +4,5 @@
     "sfx_volume": 100,
     "music_enabled": true,
     "fullscreen": false,
-    "fps_display": false
+    "fps_display": true
 }

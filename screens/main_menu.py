@@ -1,16 +1,18 @@
+# main_menu.py
+
 import os
 import logging
-from typing import Optional
-
 import pygame
+from typing import Optional, Dict, Type, Any
+from abc import ABC, abstractmethod
+
+# Import your new ButtonBuilder instead of create_button
+from ui.builders.button_builder import ButtonBuilder
+
 from ui.components.button import Button
-from ui.factories.button_factory import create_button, create_slider
 from engine.music import MusicManager
 
-# Setup logging
-logging.basicConfig(level=logging.DEBUG)
-
-# === Constants for Colors and Asset Paths ===
+# Sample constants – adjust as needed
 BACKGROUND_COLOR = (40, 44, 52)
 TEXT_COLOR = (220, 220, 220)
 HOVER_COLOR = (100, 100, 150, 180)
@@ -23,28 +25,96 @@ BACKGROUND_MUSIC_PATH = os.path.join("assets", "audio", "background_music.mp3")
 BG_IMAGE_PATH = os.path.join("assets", "images", "MainMenuBackground.png")
 
 
-# === Configuration and Dependency Injection ===
 class GameConfig:
     """
-    Configuration object for game settings and dependencies.
-    Acts as a central place to store settings loaded from the settings manager
-    and to access shared services like the music manager.
+    Example config object that provides a music manager and some flags.
+    Adapt this to your real config or inject dependencies as needed.
     """
     def __init__(self, music_manager: MusicManager) -> None:
         self.music_manager = music_manager
-        self.fps_display_enabled: bool = self.music_manager.settings_manager.get_setting("fps_display", False)
-        self.music_enabled: bool = self.music_manager.settings_manager.get_setting("music_enabled", True)
-        self.fullscreen: bool = self.music_manager.settings_manager.get_setting("fullscreen", False)
+        self.fps_display_enabled: bool = music_manager.settings_manager.get_setting("fps_display", False)
+        self.music_enabled: bool = music_manager.settings_manager.get_setting("music_enabled", True)
+        self.fullscreen: bool = music_manager.settings_manager.get_setting("fullscreen", False)
 
 
-# === Base Menu Class ===
+class MenuState(ABC):
+    """
+    Abstract base class for menu states.
+    """
+    def __init__(self, menu_manager: 'MenuManager'):
+        self.menu_manager = menu_manager
+        self.screen = pygame.display.get_surface()
+        self.screen_width, self.screen_height = self.screen.get_size()
+        self.button_font = pygame.font.Font(None, 32)
+        self.title_font = pygame.font.Font(None, 48)
+        self.small_font = pygame.font.Font(None, 24)
+        self.buttons = []
+        self.create_buttons()
+
+    @abstractmethod
+    def create_buttons(self) -> None:
+        """Each menu state must implement its own button creation"""
+        pass
+
+    @abstractmethod
+    def handle_events(self, event: pygame.event.Event) -> bool:
+        """Handle state-specific events"""
+        pass
+
+    @abstractmethod
+    def draw(self) -> None:
+        """Draw the current state"""
+        pass
+
+    def cleanup(self) -> None:
+        """Called when exiting this state"""
+        # Default implementation - override if needed
+        self.buttons.clear()
+
+
+class MenuManager:
+    """
+    Manages transitions between menu states.
+    """
+    def __init__(self, base_menu: 'MenuBase'):
+        self.base_menu = base_menu
+        self.states: Dict[str, Type[MenuState]] = {}
+        self.current_state: Optional[MenuState] = None
+
+    def register_state(self, state_name: str, state_class: Type[MenuState]) -> None:
+        """Register a menu state with a name"""
+        self.states[state_name] = state_class
+
+    def transition_to(self, state_name: str) -> None:
+        """Transition to a new state by name"""
+        if state_name not in self.states:
+            logging.error(f"State {state_name} not registered")
+            return
+
+        # Clean up current state if it exists
+        if self.current_state:
+            self.current_state.cleanup()
+
+        # Create new state
+        self.current_state = self.states[state_name](self)
+        logging.info(f"Transitioned to {state_name} state")
+
+    def handle_events(self, event: pygame.event.Event) -> bool:
+        """Forward events to current state"""
+        if self.current_state:
+            return self.current_state.handle_events(event)
+        return False
+
+    def draw(self) -> None:
+        """Draw the current state"""
+        if self.current_state:
+            self.current_state.draw()
+
+
 class MenuBase:
     """
-    Base class for menu screens with common functionality.
-    All menus receive a GameConfig instance as a dependency.
+    Base class for a Pygame menu screen. Handles background drawing, event loops, etc.
     """
-
-    # Constructor
     def __init__(self, config: GameConfig) -> None:
         self.config = config
         self.screen = pygame.display.get_surface()
@@ -57,61 +127,57 @@ class MenuBase:
         self.title_font = pygame.font.Font(None, 48)
         self.small_font = pygame.font.Font(None, 24)
 
-        # Background properties
+        # Background handling
         self.original_bg: Optional[pygame.Surface] = None
         self.background_image: Optional[pygame.Surface] = None
         self.bg_pos = (0, 0)
 
-        # Sound effects (only if the file exists)
-        self.click_sound_path: Optional[str] = CLICK_SOUND_PATH if os.path.exists(CLICK_SOUND_PATH) else None
-        self.hover_sound_path: Optional[str] = HOVER_SOUND_PATH if os.path.exists(HOVER_SOUND_PATH) else None
+        # Sound effect file paths (only if they exist)
+        self.click_sound_path = CLICK_SOUND_PATH if os.path.exists(CLICK_SOUND_PATH) else None
+        self.hover_sound_path = HOVER_SOUND_PATH if os.path.exists(HOVER_SOUND_PATH) else None
+        self.focus_sound_path = FOCUS_SOUND_PATH if os.path.exists(FOCUS_SOUND_PATH) else None
 
-        # Fullscreen state (from display flags)
+        # Fullscreen state
         self.is_fullscreen: bool = bool(self.screen.get_flags() & pygame.FULLSCREEN)
+
+        # State management
+        self.menu_manager = MenuManager(self)
+        
+        self.load_background_image()
 
     def load_background_image(self) -> None:
         """
-        Load the background image and scale it so that it covers the entire screen.
-        If the background image is missing or an error occurs, the method logs the error.
+        Load and scale a background image, if available.
         """
-        # Refresh dimensions in case the window was resized
         self.screen_width, self.screen_height = self.screen.get_size()
-        try:
-            if self.original_bg is None and os.path.exists(BG_IMAGE_PATH):
+        if self.original_bg is None and os.path.exists(BG_IMAGE_PATH):
+            try:
                 self.original_bg = pygame.image.load(BG_IMAGE_PATH)
+            except Exception as e:
+                logging.exception(f"Error loading background: {e}")
+                self.original_bg = None
 
-            if self.original_bg:
-                bg_width, bg_height = self.original_bg.get_size()
-                width_ratio = self.screen_width / bg_width
-                height_ratio = self.screen_height / bg_height
-                scale_factor = max(width_ratio, height_ratio)
-                new_width = int(bg_width * scale_factor)
-                new_height = int(bg_height * scale_factor)
-                self.background_image = pygame.transform.scale(self.original_bg, (new_width, new_height))
-                bg_x = (self.screen_width - new_width) // 2
-                bg_y = (self.screen_height - new_height) // 2
-                self.bg_pos = (bg_x, bg_y)
-            else:
-                self.background_image = None
-                self.bg_pos = (0, 0)
-        except Exception as e:
-            logging.exception(f"Error loading background image: {e}")
+        if self.original_bg:
+            bg_width, bg_height = self.original_bg.get_size()
+            width_ratio = self.screen_width / bg_width
+            height_ratio = self.screen_height / bg_height
+            scale_factor = max(width_ratio, height_ratio)
+            new_width = int(bg_width * scale_factor)
+            new_height = int(bg_height * scale_factor)
+            self.background_image = pygame.transform.scale(self.original_bg, (new_width, new_height))
+            bg_x = (self.screen_width - new_width) // 2
+            bg_y = (self.screen_height - new_height) // 2
+            self.bg_pos = (bg_x, bg_y)
+        else:
             self.background_image = None
             self.bg_pos = (0, 0)
 
     def draw_background(self) -> None:
-        """
-        Draw the background onto the screen.
-        If a background image is available, it is blitted according to its pre‑computed position.
-        """
         self.screen.fill(BACKGROUND_COLOR)
         if self.background_image:
             self.screen.blit(self.background_image, self.bg_pos)
 
     def draw_fps_counter(self) -> None:
-        """
-        Draw the frames-per-second counter on the screen if enabled in configuration.
-        """
         if self.config.fps_display_enabled:
             fps = int(self.clock.get_fps())
             fps_text = self.small_font.render(f"FPS: {fps}", True, (255, 255, 0))
@@ -119,33 +185,36 @@ class MenuBase:
 
     def toggle_fullscreen(self) -> None:
         """
-        Toggle between fullscreen and windowed mode.
-        Updates both the display mode and the persisted configuration setting.
+        Example toggle logic.
         """
         self.is_fullscreen = not self.is_fullscreen
         self.config.fullscreen = self.is_fullscreen
         self.config.music_manager.settings_manager.set_setting("fullscreen", self.is_fullscreen)
+
         if self.is_fullscreen:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
             pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-        # Clear and reset UI elements after display mode change
-        Button.all_buttons.clear()
+
         self.load_background_image()
-        self.create_buttons()
+        
+        # When changing screen mode, we should reset the menu state
+        if self.menu_manager.current_state:
+            current_state_name = next(name for name, cls in self.menu_manager.states.items() 
+                                     if isinstance(self.menu_manager.current_state, cls))
+            self.menu_manager.transition_to(current_state_name)
 
     def handle_common_events(self, event: pygame.event.Event) -> bool:
-        """
-        Handle events common to all menus (e.g. quit, fullscreen toggling, window resizing).
-        Returns True if the event was fully handled.
-        """
         if event.type == pygame.QUIT:
             self.running = False
             return True
         elif event.type == pygame.VIDEORESIZE:
-            Button.all_buttons.clear()
             self.load_background_image()
-            self.create_buttons()
+            # Reload current state when resizing
+            if self.menu_manager.current_state:
+                current_state_name = next(name for name, cls in self.menu_manager.states.items() 
+                                         if isinstance(self.menu_manager.current_state, cls))
+                self.menu_manager.transition_to(current_state_name)
             return True
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
@@ -156,390 +225,390 @@ class MenuBase:
                 return True
         return False
 
-    def create_buttons(self) -> None:
-        """
-        Create and position buttons.
-        This must be implemented in each subclass.
-        """
-        raise NotImplementedError
-
     def run(self) -> bool:
         """
-        Main loop method for the menu.
-        Must be implemented by subclasses.
+        Main menu loop using state pattern
         """
-        raise NotImplementedError
-
-
-# === Settings Menu ===
-class SettingsMenu(MenuBase):
-    """
-    Settings menu that allows the user to toggle fullscreen, FPS display,
-    music, and adjust volume levels.
-    """
-    def __init__(self, config: GameConfig) -> None:
-        super().__init__(config)
-        self.back_btn = None
-        self.fullscreen_btn = None
-        self.fps_btn = None
-        self.music_toggle_btn = None
-        self.volume_slider = None
-        self.master_volume_slider = None
-        self.load_background_image()
-        self.create_buttons()
-
-    def create_buttons(self) -> None:
-        """
-        Create and position all buttons and sliders for the settings menu.
-        """
-        # Back button (top left)
-        self.back_btn = create_button(
-            self.screen, self.button_font, "<- Back",
-            width=120, height=40,
-            x_offset=-self.screen_width // 2 + 80, y_offset=-self.screen_height // 2 + 40,
-            hover_text="← Return",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Return to main menu",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            visible_background=True,
-            music_manager=self.config.music_manager
-        )
-        # Fullscreen toggle button
-        fullscreen_text = "Fullscreen: ON" if self.is_fullscreen else "Fullscreen: OFF"
-        self.fullscreen_btn = create_button(
-            self.screen, self.button_font, fullscreen_text,
-            width=250, height=50,
-            y_offset=-20,
-            hover_text="Toggle Fullscreen Mode",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Switch between windowed and fullscreen modes",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            toggle_mode=True,
-            toggled=self.is_fullscreen,
-            music_manager=self.config.music_manager
-        )
-        # FPS counter toggle button
-        fps_text = "FPS Counter: ON" if self.config.fps_display_enabled else "FPS Counter: OFF"
-        self.fps_btn = create_button(
-            self.screen, self.button_font, fps_text,
-            width=250, height=50,
-            y_offset=50,
-            hover_text="Toggle FPS Display",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Show or hide frames per second counter",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            toggle_mode=True,
-            toggled=self.config.fps_display_enabled,
-            music_manager=self.config.music_manager
-        )
-        # Music toggle button
-        music_text = "Music: ON" if self.config.music_enabled else "Music: OFF"
-        self.music_toggle_btn = create_button(
-            self.screen, self.button_font, music_text,
-            width=250, height=50,
-            y_offset=120,
-            hover_text="Toggle Background Music",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Turn background music on or off",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            toggle_mode=True,
-            toggled=self.config.music_enabled,
-            music_manager=self.config.music_manager
-        )
-        # Master volume slider
-        self.master_volume_slider = create_slider(
-            self.screen, self.button_font,
-            width=250, height=30,
-            y_offset=200,
-            min_value=0, max_value=100,
-            current_value=int(self.config.music_manager.get_master_volume() * 100),
-            label="Master Volume",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            music_manager=self.config.music_manager
-        )
-        # Music volume slider
-        self.volume_slider = create_slider(
-            self.screen, self.button_font,
-            width=250, height=30,
-            y_offset=280,
-            min_value=0, max_value=100,
-            current_value=int(self.config.music_manager.get_volume() * 100),
-            label="Music Volume",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            music_manager=self.config.music_manager
-        )
-        # Attach event handlers for buttons and sliders
-        self.back_btn.on_click = self.handle_back
-        self.fullscreen_btn.on_click = self.handle_fullscreen_toggle
-        self.fps_btn.on_click = self.handle_fps_toggle
-        self.music_toggle_btn.on_click = self.handle_music_toggle
-        self.volume_slider.on_value_change = self.handle_volume_change
-        self.master_volume_slider.on_value_change = self.handle_master_volume_change
-        self.back_btn.set_focus(True)
-
-    def handle_back(self) -> bool:
-        """Return to the main menu."""
-        self.running = False
-        return True
-
-    def handle_fullscreen_toggle(self) -> bool:
-        """Toggle fullscreen mode and update the corresponding button text."""
-        self.toggle_fullscreen()
-        fullscreen_text = "Fullscreen: ON" if self.is_fullscreen else "Fullscreen: OFF"
-        self.fullscreen_btn.set_text(fullscreen_text)
-        return True
-
-    def handle_fps_toggle(self) -> bool:
-        """Toggle FPS counter display."""
-        self.config.fps_display_enabled = not self.config.fps_display_enabled
-        self.config.music_manager.settings_manager.set_setting("fps_display", self.config.fps_display_enabled)
-        fps_text = "FPS Counter: ON" if self.config.fps_display_enabled else "FPS Counter: OFF"
-        self.fps_btn.set_text(fps_text)
-        return True
-
-    def handle_music_toggle(self) -> bool:
-        """Toggle background music on or off."""
-        self.config.music_enabled = not self.config.music_enabled
-        self.config.music_manager.set_music_enabled(self.config.music_enabled)
-        music_text = "Music: ON" if self.config.music_enabled else "Music: OFF"
-        self.music_toggle_btn.set_text(music_text)
-        if self.config.music_enabled:
-            if not self.config.music_manager.is_playing() and os.path.exists(BACKGROUND_MUSIC_PATH):
-                self.config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
-        else:
-            self.config.music_manager.stop_music()
-        return True
-
-    def handle_volume_change(self, value: int) -> bool:
-        """Update the music volume based on slider input."""
-        volume = value / 100.0  # Convert percentage to 0.0–1.0 range
-        self.config.music_manager.set_volume(volume)
-        return True
-
-    def handle_master_volume_change(self, value: int) -> bool:
-        """Update the master volume based on slider input."""
-        volume = value / 100.0  # Convert percentage to 0.0–1.0 range
-        self.config.music_manager.set_master_volume(volume)
-        return True
-
-    def run(self) -> bool:
-        """Run the settings menu loop."""
-        self.running = True
         while self.running:
             self.draw_background()
-            title_text = self.title_font.render("Settings", True, TEXT_COLOR)
-            title_rect = title_text.get_rect(center=(self.screen_width // 2, 80))
-            self.screen.blit(title_text, title_rect)
+
             for event in pygame.event.get():
                 if self.handle_common_events(event):
                     continue
-                Button.update_all(event)
-                if self.volume_slider:
-                    self.volume_slider.handle_event(event)
-                if self.master_volume_slider:
-                    self.master_volume_slider.handle_event(event)
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    self.running = False
-            self.back_btn.draw()
-            self.fullscreen_btn.draw()
-            self.fps_btn.draw()
-            self.music_toggle_btn.draw()
-            self.master_volume_slider.draw()
-            self.volume_slider.draw()
-            instructions = self.small_font.render(
-                "Press TAB to navigate, ENTER to select, ESC to go back, F11 for fullscreen",
-                True, TEXT_COLOR
-            )
-            self.screen.blit(instructions,
-                             (self.screen_width // 2 - instructions.get_width() // 2, self.screen_height - 40))
-            self.draw_fps_counter()
-            pygame.display.flip()
-            self.clock.tick(60)
-        Button.all_buttons.clear()
-        return True
+                
+                # Let current state handle events
+                self.menu_manager.handle_events(event)
 
+            # Draw the current state
+            self.menu_manager.draw()
 
-# === Main Menu ===
-class MainMenu(MenuBase):
-    """
-    Main menu that provides options such as starting a game, loading a game,
-    accessing settings, and quitting the game.
-    """
-    def __init__(self, config: GameConfig) -> None:
-        super().__init__(config)
-        self.button_width = 250
-        self.button_height = 50
-        self.button_spacing = 20
-        self.start_game_btn = None
-        self.load_game_btn = None
-        self.settings_btn = None
-        self.quit_btn = None
-
-        # Set display mode based on persisted fullscreen setting
-        if self.config.fullscreen and not (self.screen.get_flags() & pygame.FULLSCREEN):
-            pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        elif not self.config.fullscreen and (self.screen.get_flags() & pygame.FULLSCREEN):
-            pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-        self.is_fullscreen = bool(self.screen.get_flags() & pygame.FULLSCREEN)
-
-        if self.config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
-            self.config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
-        self.load_background_image()
-        self.create_buttons()
-
-    def create_buttons(self) -> None:
-        """Create and position all buttons for the main menu."""
-        self.start_game_btn = create_button(
-            self.screen, self.button_font, "Start Game",
-            width=self.button_width-75, height=self.button_height,
-            y_offset=-100,
-            hover_text="▶ Start Game ▶",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Start a new game",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            visible_background=False,
-            debug_hitbox=True,
-            music_manager=self.config.music_manager
-        )
-        self.load_game_btn = create_button(
-            self.screen, self.button_font, "Load Game",
-            width=self.button_width, height=self.button_height,
-            y_offset=-100 + self.button_height + self.button_spacing,
-            hover_text="Load Game (Unavailable)",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Load a saved game",
-            visible_background=False,
-            debug_hitbox=False,
-            disabled=True,
-            music_manager=self.config.music_manager
-        )
-        self.settings_btn = create_button(
-            self.screen, self.button_font, "Settings",
-            width=self.button_width, height=self.button_height,
-            y_offset=-100 + (self.button_height + self.button_spacing) * 2,
-            hover_text="⚙ Settings ⚙",
-            hover_text_color=HOVER_TEXT_COLOR,
-            tooltip="Game settings",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            visible_background=False,
-            debug_hitbox=False,
-            music_manager=self.config.music_manager
-        )
-        self.quit_btn = create_button(
-            self.screen, self.button_font, "Quit",
-            width=self.button_width, height=self.button_height,
-            y_offset=-100 + (self.button_height + self.button_spacing) * 3,
-            hover_text="✖ Exit Game ✖",
-            hover_text_color=(255, 100, 100),
-            tooltip="Exit the game",
-            sound_path=self.click_sound_path,
-            hover_sound_path=self.hover_sound_path,
-            visible_background=False,
-            debug_hitbox=False,
-            music_manager=self.config.music_manager
-        )
-        self.start_game_btn.on_click = self.handle_start_game
-        self.settings_btn.on_click = self.handle_settings
-        self.quit_btn.on_click = self.handle_quit
-        self.start_game_btn.set_focus(True)
-
-    def handle_start_game(self) -> bool:
-        """
-        Start a new game.
-        Implement your game startup logic here.
-        """
-        # Game start logic goes here.
-        return True
-
-    def handle_settings(self) -> bool:
-        """Open the settings menu and update the main menu afterwards."""
-        Button.all_buttons.clear()
-        settings_menu = SettingsMenu(self.config)
-        settings_menu.run()
-        self.load_background_image()
-        self.create_buttons()
-        return True
-
-    def handle_quit(self) -> bool:
-        """Exit the game."""
-        self.running = False
-        return True
-
-    def run(self) -> bool:
-        """Run the main menu loop."""
-        self.running = True
-        while self.running:
-            self.draw_background()
-            for event in pygame.event.get():
-                if self.handle_common_events(event):
-                    continue
-                Button.update_all(event)
-            self.start_game_btn.draw()
-            self.load_game_btn.draw()
-            self.settings_btn.draw()
-            self.quit_btn.draw()
+            # Example text instructions (common across states)
             instructions = self.small_font.render(
                 "Press TAB to navigate, ENTER to select, Q to quit, F11 for fullscreen",
                 True, TEXT_COLOR
             )
-            self.screen.blit(instructions,
-                             (self.screen_width // 2 - instructions.get_width() // 2, self.screen_height - 40))
+            self.screen.blit(
+                instructions,
+                (self.screen_width // 2 - instructions.get_width() // 2, self.screen_height - 40)
+            )
+
             self.draw_fps_counter()
             pygame.display.flip()
             self.clock.tick(60)
+
         return True
 
 
-# === Application Entry Point ===
-def run_main_menu_loop() -> bool:
+class MainMenuState(MenuState):
     """
-    Initialize Pygame, create necessary dependencies, and start the main menu.
-    When the menu loop finishes, Pygame is properly quit.
+    Main menu state implementation
+    """
+    def __init__(self, menu_manager: MenuManager):
+        super().__init__(menu_manager)
+        self.title = "Main Menu"
+        
+        # If music enabled
+        config = self.menu_manager.base_menu.config
+        if config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
+            config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
+
+    def create_buttons(self) -> None:
+        """Create main menu buttons"""
+        base_menu = self.menu_manager.base_menu
+        config = base_menu.config
+        
+        # Button geometry and spacing
+        button_width = 250
+        button_height = 50
+        button_spacing = 20
+
+        # Start Game button
+        start_game_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Start Game")
+            .set_size(button_width - 75, button_height)
+            .set_offsets(0, -100)  # center horizontally, offset Y
+            .set_hover_text("▶ Start Game ▶")
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Start a new game")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_debug_hitbox(True)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        start_game_btn.on_click = lambda: logging.info("Starting new game!")
+        start_game_btn.set_focus(True)  # Initially focused
+        
+        # Load Game button (disabled)
+        load_game_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Load Game")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -100 + button_height + button_spacing)
+            .set_hover_text("Load Game (Unavailable)")
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Load a saved game")
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .set_disabled(True)
+            .build()
+        )
+        
+        # Settings button
+        settings_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Settings")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -100 + (button_height + button_spacing) * 2)
+            .set_hover_text("⚙ Settings ⚙")
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Game settings")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        settings_btn.on_click = lambda: self.menu_manager.transition_to("settings")
+        
+        # Test Menu button
+        test_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Test Menu")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -100 + (button_height + button_spacing) * 3)
+            .set_hover_text("🧪 Test Menu 🧪")
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Test features")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        test_btn.on_click = lambda: self.menu_manager.transition_to("test")
+        
+        # Quit button
+        quit_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Quit")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -100 + (button_height + button_spacing) * 4)
+            .set_hover_text("✖ Exit Game ✖")
+            .set_hover_text_color((255, 100, 100))
+            .set_tooltip("Exit the game")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        quit_btn.on_click = self.handle_quit
+        
+        self.buttons = [start_game_btn, load_game_btn, settings_btn, test_btn, quit_btn]
+
+    def handle_events(self, event: pygame.event.Event) -> bool:
+        """Handle events for this state"""
+        for button in self.buttons:
+            button.handle_event(event)
+        return False
+            
+    def draw(self) -> None:
+        """Draw the main menu state"""
+        # Draw title
+        title_text = self.title_font.render(self.title, True, TEXT_COLOR)
+        self.screen.blit(
+            title_text,
+            (self.screen_width // 2 - title_text.get_width() // 2, 100)
+        )
+        
+        # Draw all buttons
+        for button in self.buttons:
+            button.draw()
+    
+    def handle_quit(self) -> bool:
+        """Handle quit button click"""
+        self.menu_manager.base_menu.running = False
+        return True
+
+
+class SettingsMenuState(MenuState):
+    """
+    Settings menu state implementation
+    """
+    def __init__(self, menu_manager: MenuManager):
+        super().__init__(menu_manager)
+        self.title = "Settings Menu"
+
+    def create_buttons(self) -> None:
+        """Create settings menu buttons"""
+        base_menu = self.menu_manager.base_menu
+        config = base_menu.config
+        
+        # Button geometry and spacing
+        button_width = 250
+        button_height = 50
+        button_spacing = 20
+        
+        # Toggle music button
+        music_text = "Disable Music" if config.music_enabled else "Enable Music"
+        music_btn = (
+            ButtonBuilder(self.screen, self.button_font, text=music_text)
+            .set_size(button_width, button_height)
+            .set_offsets(0, -50)
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Toggle background music")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        music_btn.on_click = self.toggle_music
+        music_btn.set_focus(True)  # Initially focused
+        
+        # Toggle FPS display button
+        fps_text = "Hide FPS" if config.fps_display_enabled else "Show FPS"
+        fps_btn = (
+            ButtonBuilder(self.screen, self.button_font, text=fps_text)
+            .set_size(button_width, button_height)
+            .set_offsets(0, -50 + button_height + button_spacing)
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Toggle FPS counter")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        fps_btn.on_click = self.toggle_fps
+        
+        # Back to Main Menu button
+        back_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Back to Main Menu")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -50 + (button_height + button_spacing) * 2)
+            .set_hover_text("⬅ Main Menu")
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Return to main menu")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        back_btn.on_click = lambda: self.menu_manager.transition_to("main")
+        
+        self.buttons = [music_btn, fps_btn, back_btn]
+
+    def handle_events(self, event: pygame.event.Event) -> bool:
+        """Handle events for this state"""
+        for button in self.buttons:
+            button.handle_event(event)
+        return False
+            
+    def draw(self) -> None:
+        """Draw the settings menu state"""
+        # Draw title
+        title_text = self.title_font.render(self.title, True, TEXT_COLOR)
+        self.screen.blit(
+            title_text,
+            (self.screen_width // 2 - title_text.get_width() // 2, 100)
+        )
+        
+        # Draw all buttons
+        for button in self.buttons:
+            button.draw()
+    
+    def toggle_music(self) -> bool:
+        """Toggle music on/off"""
+        config = self.menu_manager.base_menu.config
+        config.music_enabled = not config.music_enabled
+        config.music_manager.settings_manager.set_setting("music_enabled", config.music_enabled)
+        
+        if config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
+            config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
+        else:
+            config.music_manager.stop_music()
+            
+        # Update button text
+        self.buttons[0].text = "Disable Music" if config.music_enabled else "Enable Music"
+        return True
+        
+    def toggle_fps(self) -> bool:
+        """Toggle FPS display on/off"""
+        config = self.menu_manager.base_menu.config
+        config.fps_display_enabled = not config.fps_display_enabled
+        config.music_manager.settings_manager.set_setting("fps_display", config.fps_display_enabled)
+        
+        # Update button text
+        self.buttons[1].text = "Hide FPS" if config.fps_display_enabled else "Show FPS"
+        return True
+
+
+class TestMenuState(MenuState):
+    """
+    Test menu state implementation
+    """
+    def __init__(self, menu_manager: MenuManager):
+        super().__init__(menu_manager)
+        self.title = "Test Menu"
+
+    def create_buttons(self) -> None:
+        """Create test menu buttons"""
+        base_menu = self.menu_manager.base_menu
+        config = base_menu.config
+        
+        # Button geometry and spacing
+        button_width = 250
+        button_height = 50
+        button_spacing = 20
+        
+        # Example test button 1
+        test1_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Test Feature 1")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -50)
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Try test feature 1")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        test1_btn.on_click = lambda: logging.info("Test feature 1 activated")
+        test1_btn.set_focus(True)  # Initially focused
+        
+        # Example test button 2
+        test2_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Test Feature 2")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -50 + button_height + button_spacing)
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Try test feature 2")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        test2_btn.on_click = lambda: logging.info("Test feature 2 activated")
+        
+        # Back to Main Menu button
+        back_btn = (
+            ButtonBuilder(self.screen, self.button_font, text="Back to Main Menu")
+            .set_size(button_width, button_height)
+            .set_offsets(0, -50 + (button_height + button_spacing) * 2)
+            .set_hover_text("⬅ Main Menu")
+            .set_hover_text_color(HOVER_TEXT_COLOR)
+            .set_tooltip("Return to main menu")
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_visible_background(False)
+            .set_music_manager(config.music_manager)
+            .build()
+        )
+        back_btn.on_click = lambda: self.menu_manager.transition_to("main")
+        
+        self.buttons = [test1_btn, test2_btn, back_btn]
+
+    def handle_events(self, event: pygame.event.Event) -> bool:
+        """Handle events for this state"""
+        for button in self.buttons:
+            button.handle_event(event)
+        return False
+            
+    def draw(self) -> None:
+        """Draw the test menu state"""
+        # Draw title
+        title_text = self.title_font.render(self.title, True, TEXT_COLOR)
+        self.screen.blit(
+            title_text,
+            (self.screen_width // 2 - title_text.get_width() // 2, 100)
+        )
+        
+        # Draw all buttons
+        for button in self.buttons:
+            button.draw()
+
+
+class MainMenu(MenuBase):
+    """
+    Main menu controller class that manages menu states.
+    """
+    def __init__(self, config: GameConfig) -> None:
+        super().__init__(config)
+        
+        # Register all menu states
+        self.menu_manager.register_state("main", MainMenuState)
+        self.menu_manager.register_state("settings", SettingsMenuState)
+        self.menu_manager.register_state("test", TestMenuState)
+        
+        # Start with the main menu state
+        self.menu_manager.transition_to("main")
+
+        # If the user wants the game to start with music
+        if self.config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
+            self.config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
+
+
+def run_main_menu_loop():
+    """
+    Example function that initializes Pygame and runs the main menu.
     """
     pygame.init()
     pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     music_manager = MusicManager()
     config = GameConfig(music_manager)
     main_menu = MainMenu(config)
-    result = main_menu.run()
+    main_menu.run()
     pygame.quit()
-    return result
-
-
-# For backwards compatibility with existing code
-def RunSettingsMenuLoop():
-    """Run the settings menu screen."""
-    pygame.init()
-    pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    music_manager = MusicManager()
-    config = GameConfig(music_manager)
-    settings = SettingsMenu(config)
-    result = settings.run()
-    pygame.quit()
-    return result
-
-
-def RunMainMenuLoop():
-    """Original function for backward compatibility."""
-    return run_main_menu_loop()
-
-
-def run_main_menu_loop_game(game):
-    """Run the main menu screen with a game instance."""
-    pygame.init()
-    pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    music_manager = MusicManager()
-    config = GameConfig(music_manager)
-    main_menu = MainMenu(config)
-    result = main_menu.run()
-    pygame.quit()
-    return result
 
