@@ -48,15 +48,15 @@ class Game:
     def run_main_menu(self):
         """Run the main menu game loop."""
         try:
-            from screens.menu_system import MainMenu, GameConfig
+            from screens.menu_system import MenuBaseStateController, MenuConfig
             from engine.music import MusicManager
             
             # Create required dependencies
             music_manager = MusicManager()
-            config = GameConfig(music_manager)
+            config = MenuConfig(music_manager)
             
             # Create and run the main menu with proper configuration
-            menu = MainMenu(config)
+            menu = MenuBaseStateController(config)
             menu.run()
             
             # If we return from the menu and quit was selected

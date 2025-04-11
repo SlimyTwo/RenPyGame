@@ -1,29 +1,36 @@
-# menu_system.py
+"""Menu system core — manages the main menu loop, background, and menu state transitions."""
 
 import os
 import logging
-import pygame
-from typing import Optional, Dict, Type, Any
 from abc import ABC, abstractmethod
+from typing import Optional, Dict, Type, Any
 
-# Import your ButtonBuilder instead of create_button
+import pygame
+
+# === UI Components ===
 from ui.builders.button_builder import ButtonBuilder
 from ui.components.button import Button
+
+# === Engine ===
 from engine.music import MusicManager
 
+# === Configuration ===
 from config import (
-    BACKGROUND_COLOR, TEXT_COLOR, HOVER_COLOR, HOVER_TEXT_COLOR,
-    CLICK_SOUND_PATH, HOVER_SOUND_PATH, BACKGROUND_MUSIC_PATH, BG_IMAGE_PATH
+    BACKGROUND_COLOR,
+    TEXT_COLOR,
+    HOVER_COLOR,
+    HOVER_TEXT_COLOR,
+    CLICK_SOUND_PATH,
+    HOVER_SOUND_PATH,
+    BACKGROUND_MUSIC_PATH,
+    BG_IMAGE_PATH
 )
 
-# Sample constants – adjust as needed
-BACKGROUND_COLOR = (40, 44, 52)
-TEXT_COLOR = (220, 220, 220)
-HOVER_COLOR = (100, 100, 150, 180)
-HOVER_TEXT_COLOR = (255, 255, 0)
+# === Setup Logging ===
+logging.basicConfig(level=logging.INFO)
 
-
-class GameConfig:
+# Holds global user settings like fullscreen, music, and FPS display.
+class MenuConfig:
     """
     Example config object that provides a music manager and some flags.
     Adapt this to your real config or inject dependencies as needed.
@@ -34,8 +41,8 @@ class GameConfig:
         self.music_enabled: bool = music_manager.settings_manager.get_setting("music_enabled", True)
         self.fullscreen: bool = music_manager.settings_manager.get_setting("fullscreen", False)
 
-
-class MenuState(ABC):
+# Abstract base for all individual menu screens (e.g., Main, Settings).
+class AbstractMenuBase(ABC):
     """
     Abstract base class for menu states.
     """
@@ -69,17 +76,17 @@ class MenuState(ABC):
         # Default implementation - override if needed
         self.buttons.clear()
 
-
+# Handles switching between and managing active menu states.
 class MenuManager:
     """
     Manages transitions between menu states.
     """
     def __init__(self, base_menu: 'MenuBase'):
         self.base_menu = base_menu
-        self.states: Dict[str, Type[MenuState]] = {}
-        self.current_state: Optional[MenuState] = None
+        self.states: Dict[str, Type[AbstractMenuBase]] = {}
+        self.current_state: Optional[AbstractMenuBase] = None
 
-    def register_state(self, state_name: str, state_class: Type[MenuState]) -> None:
+    def register_state(self, state_name: str, state_class: Type[AbstractMenuBase]) -> None:
         """Register a menu state with a name"""
         self.states[state_name] = state_class
 
@@ -108,12 +115,12 @@ class MenuManager:
         if self.current_state:
             self.current_state.draw()
 
-
+# Base loop and rendering logic for the overall menu system.
 class MenuBase:
     """
     Base class for a Pygame menu screen. Handles background drawing, event loops, etc.
     """
-    def __init__(self, config: GameConfig) -> None:
+    def __init__(self, config: MenuConfig) -> None:
         self.config = config
         self.screen = pygame.display.get_surface()
         self.screen_width, self.screen_height = self.screen.get_size()
@@ -253,23 +260,23 @@ class MenuBase:
 
         return True
 
-
-class MainMenu(MenuBase):
+# Initializes and runs the full menu system with registered states handles the logic of the state pattern.
+class MenuBaseStateController(MenuBase):
     """
     Main menu controller class that manages menu states.
     """
-    def __init__(self, config: GameConfig) -> None:
+    def __init__(self, config: MenuConfig) -> None:
         super().__init__(config)
         
         # Import the menu states
-        from screens.main_menu import MainMenuState
-        from screens.settings_menu import SettingsMenuState
-        from screens.test_menu import TestMenuState
+        from screens.main_menu import MainAbstractMenuBase
+        from screens.settings_menu import SettingsAbstractMenuBase
+        from screens.test_menu import TestAbstractMenuBase
         
         # Register all menu states
-        self.menu_manager.register_state("main", MainMenuState)
-        self.menu_manager.register_state("settings", SettingsMenuState)
-        self.menu_manager.register_state("test", TestMenuState)
+        self.menu_manager.register_state("main", MainAbstractMenuBase)
+        self.menu_manager.register_state("settings", SettingsAbstractMenuBase)
+        self.menu_manager.register_state("test", TestAbstractMenuBase)
         
         # Start with the main menu state
         self.menu_manager.transition_to("main")

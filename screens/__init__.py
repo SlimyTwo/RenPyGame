@@ -1,4 +1,4 @@
 # Import all menu screens for convenience
-from .main_menu import MainMenuState
-from .settings_menu import SettingsMenuState
-from .test_menu import TestMenuState
+from .main_menu import MainAbstractMenuBase
+from .settings_menu import SettingsAbstractMenuBase
+from .test_menu import TestAbstractMenuBase

@@ -13,10 +13,10 @@ main.py
          │    ├─► run_main_menu():
          │    │     ├─► Instantiates MusicManager (utility/MusicManager.py)
          │    │     │     └─► Manages background music, volumes, and sound effects
-         │    │     ├─► Creates a GameConfig object (screens/MainMenuGameLoop.py)
+         │    │     ├─► Creates a MenuConfig object (screens/MainMenuGameLoop.py)
          │    │     │     └─► Retrieves settings (like fullscreen, FPS, and music status)
-         │    │     ├─► Instantiates MainMenu (screens/MainMenuGameLoop.py)
-         │    │     │     ├─► MainMenu:
+         │    │     ├─► Instantiates MenuBaseStateController (screens/MainMenuGameLoop.py)
+         │    │     │     ├─► MenuBaseStateController:
          │    │     │     │     ├─► Sets display mode (fullscreen/windowed) based on config
          │    │     │     │     ├─► Plays background music if enabled
          │    │     │     │     ├─► Loads the background image (using MainMenuGameLoop.load_background_image)
@@ -24,7 +24,7 @@ main.py
          │    │     │     │           └─► Buttons are defined in buttons/ButtonClass.py (and extended by __initi__.py)
          │    │     │     ├─► Provides event handling (keyboard/mouse) for navigation and activation.
          │    │     │     └─► Offers an entry point to the SettingsMenu when the corresponding button is pressed.
-         │    │     └─► After MainMenu completes, game.running is updated.
+         │    │     └─► After MenuBaseStateController completes, game.running is updated.
          │    └─► quit():
          │          └─► Cleans up, exits Pygame, and terminates the program.
          │

@@ -3,7 +3,7 @@
 import logging
 import pygame
 
-from screens.menu_system import MenuState, MenuManager
+from screens.menu_system import AbstractMenuBase, MenuManager
 from ui.builders.button_builder import ButtonBuilder
 
 # Constants from menu_system
@@ -11,7 +11,7 @@ TEXT_COLOR = (220, 220, 220)
 HOVER_TEXT_COLOR = (255, 255, 0)
 
 
-class MainMenuState(MenuState):
+class MainAbstractMenuBase(AbstractMenuBase):
     """
     Main menu state implementation
     """

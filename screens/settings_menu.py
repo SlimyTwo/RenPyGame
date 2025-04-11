@@ -3,7 +3,7 @@
 import os
 import pygame
 
-from screens.menu_system import MenuState, MenuManager  # Updated import
+from screens.menu_system import AbstractMenuBase, MenuManager  # Updated import
 from ui.builders.button_builder import ButtonBuilder
 
 from config import BACKGROUND_MUSIC_PATH  # make sure this is at the top
@@ -13,7 +13,7 @@ TEXT_COLOR = (220, 220, 220)
 HOVER_TEXT_COLOR = (255, 255, 0)
 
 
-class SettingsMenuState(MenuState):
+class SettingsAbstractMenuBase(AbstractMenuBase):
     """
     Settings menu state implementation
     """
