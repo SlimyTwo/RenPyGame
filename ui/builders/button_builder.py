@@ -58,7 +58,7 @@ class ButtonBuilder:
 
         self.sound_path: Optional[str] = None
         self.hover_sound_path: Optional[str] = None
-        self.focus_sound_path: Optional[str] = None
+        # Removed focus_sound_path
 
         self.text_align: str = "center"
 
@@ -165,10 +165,10 @@ class ButtonBuilder:
         self.hover_text = text
         return self
 
-    def set_sounds(self, click_sound: str, hover_sound: str = None, focus_sound: str = None) -> "ButtonBuilder":
+    def set_sounds(self, click_sound: str, hover_sound: str = None) -> "ButtonBuilder":
         self.sound_path = click_sound
         self.hover_sound_path = hover_sound
-        self.focus_sound_path = focus_sound
+        # Removed focus_sound_path parameter
         return self
 
     def set_text_align(self, align: str) -> "ButtonBuilder":
@@ -264,7 +264,7 @@ class ButtonBuilder:
             hover_text=self.hover_text,
             sound_path=self.sound_path,
             hover_sound_path=self.hover_sound_path,
-            focus_sound_path=self.focus_sound_path,
+            focus_sound_path=None,  # Always pass None for focus_sound_path
             text_align=self.text_align,
             shape=self.shape,
             shape_params=self.shape_params,

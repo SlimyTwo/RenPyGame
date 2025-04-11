@@ -4,7 +4,7 @@ from config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
     GAME_TITLE,
-    MAIN_MENU_BG,
+    BG_IMAGE_PATH,
     DEFAULT_FONT_SIZE
 )
 
@@ -38,7 +38,7 @@ class WindowManager:
 
         # Attempt to load background image
         try:
-            self.background = pygame.image.load(MAIN_MENU_BG).convert()
+            self.background = pygame.image.load(BG_IMAGE_PATH).convert()
         except pygame.error as e:
             print(f"Error loading background image: {e}")
             self.background = None

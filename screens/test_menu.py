@@ -36,7 +36,7 @@ class TestMenuState(MenuState):
             .set_offsets(0, -50)
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Try test feature 1")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -51,7 +51,7 @@ class TestMenuState(MenuState):
             .set_offsets(0, -50 + button_height + button_spacing)
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Try test feature 2")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -66,7 +66,7 @@ class TestMenuState(MenuState):
             .set_hover_text("⬅ Main Menu")
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Return to main menu")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()

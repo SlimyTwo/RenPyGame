@@ -8,6 +8,8 @@ from typing import Optional
 from screens.main_menu import MenuState, MenuManager
 from ui.builders.button_builder import ButtonBuilder
 
+from config import BACKGROUND_MUSIC_PATH  # make sure this is at the top
+
 # Constants from main_menu.py
 TEXT_COLOR = (220, 220, 220)
 HOVER_TEXT_COLOR = (255, 255, 0)
@@ -39,7 +41,7 @@ class SettingsMenuState(MenuState):
             .set_offsets(0, -50)
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Toggle background music")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -55,7 +57,7 @@ class SettingsMenuState(MenuState):
             .set_offsets(0, -50 + button_height + button_spacing)
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Toggle FPS counter")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -70,7 +72,7 @@ class SettingsMenuState(MenuState):
             .set_hover_text("⬅ Main Menu")
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Return to main menu")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -97,22 +99,30 @@ class SettingsMenuState(MenuState):
         # Draw all buttons
         for button in self.buttons:
             button.draw()
-    
+
     def toggle_music(self) -> bool:
         """Toggle music on/off"""
         config = self.menu_manager.base_menu.config
+        music_manager = config.music_manager
+
+        # Toggle the setting
         config.music_enabled = not config.music_enabled
-        config.music_manager.settings_manager.set_setting("music_enabled", config.music_enabled)
-        
-        if config.music_enabled and os.path.exists(self.menu_manager.base_menu.config.music_manager.current_music_path):
-            config.music_manager.play_music(config.music_manager.current_music_path)
+        music_manager.settings_manager.set_setting("music_enabled", config.music_enabled)
+
+        if config.music_enabled:
+            # Use current track if available, otherwise fall back to default menu music
+            music_path = music_manager.current_music or BACKGROUND_MUSIC_PATH
+            if os.path.exists(music_path):
+                music_manager.play_music(music_path)
+            else:
+                print(f"Music file not found: {music_path}")
         else:
-            config.music_manager.stop_music()
-            
-        # Update button text
+            music_manager.stop_music()
+
+        # Update button label
         self.buttons[0].text = "Disable Music" if config.music_enabled else "Enable Music"
         return True
-        
+
     def toggle_fps(self) -> bool:
         """Toggle FPS display on/off"""
         config = self.menu_manager.base_menu.config
@@ -122,3 +132,4 @@ class SettingsMenuState(MenuState):
         # Update button text
         self.buttons[1].text = "Hide FPS" if config.fps_display_enabled else "Show FPS"
         return True
+

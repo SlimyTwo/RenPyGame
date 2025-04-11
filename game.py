@@ -2,7 +2,7 @@
 import pygame
 import sys
 import os
-from config import DEFAULT_FONT_SIZE, MAIN_MENU_BG
+from config import DEFAULT_FONT_SIZE, BG_IMAGE_PATH
 from engine.resource_loader import ResourceManager
 from engine.display import initialize_window
 
@@ -30,10 +30,10 @@ class Game:
             self.resources.load_font("title", "", 48)
             
             # Load main menu background
-            if os.path.exists(MAIN_MENU_BG):
-                self.resources.load_image("main_menu_bg", MAIN_MENU_BG)
+            if os.path.exists(BG_IMAGE_PATH):
+                self.resources.load_image("main_menu_bg", BG_IMAGE_PATH)
             else:
-                print(f"Warning: Main menu background image not found at {MAIN_MENU_BG}")
+                print(f"Warning: Main menu background image not found at {BG_IMAGE_PATH}")
             
             self.running = True
 

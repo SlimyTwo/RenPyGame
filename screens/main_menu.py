@@ -11,17 +11,16 @@ from ui.builders.button_builder import ButtonBuilder
 from ui.components.button import Button
 from engine.music import MusicManager
 
+from config import (
+    BACKGROUND_COLOR, TEXT_COLOR, HOVER_COLOR, HOVER_TEXT_COLOR,
+    CLICK_SOUND_PATH, HOVER_SOUND_PATH, BACKGROUND_MUSIC_PATH, BG_IMAGE_PATH
+)
+
 # Sample constants – adjust as needed
 BACKGROUND_COLOR = (40, 44, 52)
 TEXT_COLOR = (220, 220, 220)
 HOVER_COLOR = (100, 100, 150, 180)
 HOVER_TEXT_COLOR = (255, 255, 0)
-
-CLICK_SOUND_PATH = os.path.join("assets", "audio", "click.wav")
-HOVER_SOUND_PATH = os.path.join("assets", "audio", "hover.wav")
-FOCUS_SOUND_PATH = os.path.join("assets", "audio", "focus.wav")
-BACKGROUND_MUSIC_PATH = os.path.join("assets", "audio", "background_music.mp3")
-BG_IMAGE_PATH = os.path.join("assets", "images", "MainMenuBackground.png")
 
 
 class GameConfig:
@@ -134,10 +133,6 @@ class MenuBase:
         # Sound effect file paths (only if they exist)
         self.click_sound_path = CLICK_SOUND_PATH if os.path.exists(CLICK_SOUND_PATH) else None
         self.hover_sound_path = HOVER_SOUND_PATH if os.path.exists(HOVER_SOUND_PATH) else None
-        self.focus_sound_path = FOCUS_SOUND_PATH if os.path.exists(FOCUS_SOUND_PATH) else None
-
-        # Fullscreen state
-        self.is_fullscreen: bool = bool(self.screen.get_flags() & pygame.FULLSCREEN)
 
         # State management
         self.menu_manager = MenuManager(self)
@@ -184,23 +179,24 @@ class MenuBase:
 
     def toggle_fullscreen(self) -> None:
         """
-        Example toggle logic.
+        Toggle between fullscreen and windowed mode.
         """
-        self.is_fullscreen = not self.is_fullscreen
-        self.config.fullscreen = self.is_fullscreen
-        self.config.music_manager.settings_manager.set_setting("fullscreen", self.is_fullscreen)
+        self.config.fullscreen = not self.config.fullscreen
+        self.config.music_manager.settings_manager.set_setting("fullscreen", self.config.fullscreen)
 
-        if self.is_fullscreen:
+        if self.config.fullscreen:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
             pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
 
         self.load_background_image()
-        
-        # When changing screen mode, we should reset the menu state
+
+        # Reset the current menu state
         if self.menu_manager.current_state:
-            current_state_name = next(name for name, cls in self.menu_manager.states.items() 
-                                     if isinstance(self.menu_manager.current_state, cls))
+            current_state_name = next(
+                name for name, cls in self.menu_manager.states.items()
+                if isinstance(self.menu_manager.current_state, cls)
+            )
             self.menu_manager.transition_to(current_state_name)
 
     def handle_common_events(self, event: pygame.event.Event) -> bool:
@@ -265,11 +261,6 @@ class MainMenuState(MenuState):
     def __init__(self, menu_manager: MenuManager):
         super().__init__(menu_manager)
         self.title = "Main Menu"
-        
-        # If music enabled
-        config = self.menu_manager.base_menu.config
-        if config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
-            config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
 
     def create_buttons(self) -> None:
         """Create main menu buttons"""
@@ -289,7 +280,7 @@ class MainMenuState(MenuState):
             .set_hover_text("▶ Start Game ▶")
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Start a new game")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)
             .set_visible_background(False)
             .set_debug_hitbox(True)
             .set_music_manager(config.music_manager)
@@ -320,7 +311,7 @@ class MainMenuState(MenuState):
             .set_hover_text("⚙ Settings ⚙")
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Game settings")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -335,7 +326,7 @@ class MainMenuState(MenuState):
             .set_hover_text("🧪 Test Menu 🧪")
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Test features")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -350,7 +341,7 @@ class MainMenuState(MenuState):
             .set_hover_text("✖ Exit Game ✖")
             .set_hover_text_color((255, 100, 100))
             .set_tooltip("Exit the game")
-            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path, base_menu.focus_sound_path)
+            .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)
             .set_visible_background(False)
             .set_music_manager(config.music_manager)
             .build()
@@ -407,15 +398,3 @@ class MainMenu(MenuBase):
         if self.config.music_enabled and os.path.exists(BACKGROUND_MUSIC_PATH):
             self.config.music_manager.play_music(BACKGROUND_MUSIC_PATH)
 
-
-def run_main_menu_loop():
-    """
-    Example function that initializes Pygame and runs the main menu.
-    """
-    pygame.init()
-    pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    music_manager = MusicManager()
-    config = GameConfig(music_manager)
-    main_menu = MainMenu(config)
-    main_menu.run()
-    pygame.quit()
