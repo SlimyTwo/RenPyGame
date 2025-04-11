@@ -141,7 +141,7 @@ class ButtonBuilder:
         self.border_width = width
         return self
 
-    def set_visible_background(self, visible: bool) -> "ButtonBuilder":
+    def set_is_background_visible(self, visible: bool) -> "ButtonBuilder":
         self.visible_background = visible
         return self
 
@@ -211,6 +211,25 @@ class ButtonBuilder:
         """
         self.button_group = group
         return self
+
+    @staticmethod
+    def default_button(screen: pygame.Surface, font: pygame.font.Font, text: str = "Default Button") -> "ButtonBuilder":
+        """
+        Creates a ButtonBuilder instance with default styling preset.
+        
+        Args:
+            screen: The pygame surface to draw on
+            font: The font to use for text rendering
+            text: Button text
+            
+        Returns:
+            A pre-configured ButtonBuilder instance
+        """
+        return (ButtonBuilder(screen, font, text)
+                .set_is_background_visible(True)
+                .set_background_color((0, 0, 0))
+                .set_size(500, 70)
+                )
 
     # ----- FINAL BUILD METHOD -----
     def build(self) -> Button:

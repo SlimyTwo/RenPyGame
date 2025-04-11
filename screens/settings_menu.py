@@ -40,7 +40,7 @@ class SettingsAbstractMenuBase(AbstractMenuBase):
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Toggle background music")
             .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
-            .set_visible_background(False)
+            .set_is_background_visible(False)
             .set_music_manager(config.music_manager)
             .build()
         )
@@ -56,7 +56,7 @@ class SettingsAbstractMenuBase(AbstractMenuBase):
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Toggle FPS counter")
             .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
-            .set_visible_background(False)
+            .set_is_background_visible(False)
             .set_music_manager(config.music_manager)
             .build()
         )
@@ -71,7 +71,7 @@ class SettingsAbstractMenuBase(AbstractMenuBase):
             .set_hover_text_color(HOVER_TEXT_COLOR)
             .set_tooltip("Return to main menu")
             .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)  # Removed focus_sound_path
-            .set_visible_background(False)
+            .set_is_background_visible(False)
             .set_music_manager(config.music_manager)
             .build()
         )

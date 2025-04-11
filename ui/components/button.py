@@ -30,7 +30,7 @@ class Button:
         screen: pygame.Surface,
         font: pygame.font.Font,
         on_click: Optional[Callable[[], Any]] = None,
-        bg_color: Tuple[int, int, int] = (100, 100, 100),
+        bg_color: Tuple[int, int, int] = (0, 0, 0),
         hover_color: Tuple[int, int, int] = (150, 150, 150),
         text_color: Tuple[int, int, int] = (255, 255, 255),
         hover_text_color: Optional[Tuple[int, int, int]] = None,
