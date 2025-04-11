@@ -1,2 +1,4 @@
-# from .main_menu import run_main_menu_loop
-
+# Import all menu screens for convenience
+from .main_menu import MainMenuState
+from .settings_menu import SettingsMenuState
+from .test_menu import TestMenuState

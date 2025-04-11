@@ -3,10 +3,10 @@
 import logging
 import pygame
 
-from screens.main_menu import MenuState, MenuManager
+from screens.menu_system import MenuState, MenuManager  # Updated import
 from ui.builders.button_builder import ButtonBuilder
 
-# Constants from main_menu.py
+# Constants from menu_system
 TEXT_COLOR = (220, 220, 220)
 HOVER_TEXT_COLOR = (255, 255, 0)
 
@@ -93,3 +93,4 @@ class TestMenuState(MenuState):
         # Draw all buttons
         for button in self.buttons:
             button.draw()
+

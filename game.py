@@ -48,7 +48,7 @@ class Game:
     def run_main_menu(self):
         """Run the main menu game loop."""
         try:
-            from screens.main_menu import MainMenu, GameConfig
+            from screens.menu_system import MainMenu, GameConfig
             from engine.music import MusicManager
             
             # Create required dependencies

@@ -1,16 +1,14 @@
 # settings_menu.py
 
 import os
-import logging
 import pygame
-from typing import Optional
 
-from screens.main_menu import MenuState, MenuManager
+from screens.menu_system import MenuState, MenuManager  # Updated import
 from ui.builders.button_builder import ButtonBuilder
 
 from config import BACKGROUND_MUSIC_PATH  # make sure this is at the top
 
-# Constants from main_menu.py
+# Constants from menu_system
 TEXT_COLOR = (220, 220, 220)
 HOVER_TEXT_COLOR = (255, 255, 0)
 
