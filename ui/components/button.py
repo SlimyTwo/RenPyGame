@@ -14,12 +14,11 @@ class Button:
     Class Attributes:
       instances: Buttons with textual labels.
       all_buttons: All button instances used for keyboard navigation.
-      focused_button: The currently focused button.
       all_sliders: Slider instances for keyboard navigation.
     """
+
     instances: List["Button"] = []
     all_buttons: List["Button"] = []
-    focused_button: Optional["Button"] = None
     all_sliders: List[Any] = []  # List of slider instances (type from SliderButton if desired)
 
     def __init__(
@@ -44,7 +43,6 @@ class Button:
         disabled: bool = False,
         sound_path: Optional[str] = None,
         hover_sound_path: Optional[str] = None,
-        focus_sound_path: Optional[str] = None,
         text_align: str = "center",
         shape: str = "rectangle",
         shape_params: Optional[Dict[str, Any]] = None,
@@ -55,13 +53,13 @@ class Button:
         toggle_mode: bool = False,
         toggled: bool = False,
         toggle_color: Tuple[int, int, int] = (160, 160, 200),
-        focus_color: Tuple[int, int, int] = (200, 200, 255),
-        focus_border_color: Tuple[int, int, int] = (100, 100, 255),
         translation_func: Optional[Callable[[str], str]] = None,
         animation_speed: int = 5,
         hover_text: Optional[str] = None,
         music_manager: Optional[MusicManager] = None
     ) -> None:
+
+
         """Initialize a new Button instance with advanced features."""
         self.rect = rect
         self.original_text = text
@@ -88,7 +86,6 @@ class Button:
         # State flags
         self.hovered: bool = False
         self.clicked: bool = False
-        self.focused: bool = False
 
         # Animation state
         self.hover_alpha: int = 0
@@ -99,7 +96,6 @@ class Button:
         self.tooltip_font = pygame.font.Font(None, 20)
         self.sound_path = sound_path
         self.hover_sound_path = hover_sound_path
-        self.focus_sound_path = focus_sound_path
         self.sounds_loaded: bool = False
         self.text_align = text_align
         self.shape = shape
@@ -111,10 +107,7 @@ class Button:
         self.toggle_mode = toggle_mode
         self.toggled = toggled
         self.toggle_color = toggle_color
-        self.focus_color = focus_color
-        self.focus_border_color = focus_border_color
         self.translation_func = translation_func
-        self.group: Optional["ButtonGroup"] = None
 
         # Music manager for playing sounds (if provided)
         self.music_manager = music_manager
@@ -135,7 +128,6 @@ class Button:
         try:
             self.click_sound = pygame.mixer.Sound(self.sound_path) if self.sound_path else None
             self.hover_sound = pygame.mixer.Sound(self.hover_sound_path) if self.hover_sound_path else None
-            self.focus_sound = pygame.mixer.Sound(self.focus_sound_path) if self.focus_sound_path else None
             self.sounds_loaded = True
         except Exception as e:
             logging.exception(f"Error loading sounds for button '{self.id}': {e}")
@@ -150,10 +142,6 @@ class Button:
         elif self.toggled and self.toggle_mode:
             bg_color = self.toggle_color
             border_color = self.border_color
-            text_color = self.text_color
-        elif self.focused:
-            bg_color = self.focus_color
-            border_color = self.focus_border_color
             text_color = self.text_color
         elif self.hovered:
             bg_color = self.hover_color
@@ -175,12 +163,6 @@ class Button:
                 pygame.draw.circle(self.screen, bg_color, self.rect.center, radius)
                 if self.border_width > 0:
                     pygame.draw.circle(self.screen, border_color, self.rect.center, radius, width=self.border_width)
-            elif self.shape == "polygon":
-                points = self.shape_params.get("points", [])
-                if points:
-                    pygame.draw.polygon(self.screen, bg_color, points)
-                    if self.border_width > 0:
-                        pygame.draw.polygon(self.screen, border_color, points, width=self.border_width)
 
         # Optionally draw a semi-transparent hitbox for debugging
         if self.show_hitbox:
@@ -315,16 +297,6 @@ class Button:
             dx = center[0] - mouse_pos[0]
             dy = center[1] - mouse_pos[1]
             is_hovering = (dx * dx + dy * dy) <= (radius * radius)
-        elif self.shape == "polygon":
-            points = self.shape_params.get("points", [])
-            minx = min(p[0] for p in points)
-            miny = min(p[1] for p in points)
-            maxx = max(p[0] for p in points)
-            maxy = max(p[1] for p in points)
-            bounding_rect = pygame.Rect(minx, miny, maxx - minx, maxy - miny)
-            is_hovering = bounding_rect.collidepoint(mouse_pos)
-            if is_hovering and len(points) > 2:
-                is_hovering = self._point_in_polygon(mouse_pos, points)
         else:
             is_hovering = self.rect.collidepoint(mouse_pos)
 
@@ -375,106 +347,12 @@ class Button:
                 if self.on_click:
                     self.on_click()
                 result = True
-            elif self.focused and event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-                if self.click_sound and self.sounds_loaded:
-                    if self.music_manager:
-                        self.music_manager.play_sound(self.click_sound)
-                    else:
-                        self.click_sound.play()
-                if self.toggle_mode:
-                    if self.group:
-                        for btn in self.group.buttons:
-                            if btn != self:
-                                btn.toggled = False
-                        self.toggled = True
-                        self.group.selected = self
-                    else:
-                        self.toggled = not self.toggled
-                if self.on_click:
-                    self.on_click()
-                result = True
-            elif event.key == pygame.K_TAB:
-                current_index = -1
-                for i, btn in enumerate(Button.all_buttons):
-                    if btn.focused:
-                        current_index = i
-                        btn.set_focus(False)
-                        break
-                next_index = 0
-                if current_index >= 0:
-                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                        next_index = (current_index - 1) % len(Button.all_buttons)
-                    else:
-                        next_index = (current_index + 1) % len(Button.all_buttons)
-                original_next = next_index
-                while Button.all_buttons[next_index].disabled:
-                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                        next_index = (next_index - 1) % len(Button.all_buttons)
-                    else:
-                        next_index = (next_index + 1) % len(Button.all_buttons)
-                    if next_index == original_next:
-                        break
-                if not Button.all_buttons[next_index].disabled:
-                    Button.all_buttons[next_index].set_focus(True)
-                    result = True
 
         return result
 
-    def _point_in_polygon(self, point: Tuple[int, int], vertices: List[Tuple[int, int]]) -> bool:
-        """
-        Check if a point is inside a polygon using the ray casting algorithm.
-        """
-        x, y = point
-        n = len(vertices)
-        inside = False
-        p1x, p1y = vertices[0]
-        for i in range(1, n + 1):
-            p2x, p2y = vertices[i % n]
-            if y > min(p1y, p2y) and y <= max(p1y, p2y) and x <= max(p1x, p2x):
-                if p1y != p2y:
-                    xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                    if p1x == p2x or x <= xinters:
-                        inside = not inside
-            p1x, p1y = p2x, p2y
-        return inside
-
-    def set_focus(self, focused: bool) -> bool:
-        """
-        Set keyboard focus to this button.
-        Returns True if focus was updated.
-        """
-        if self.disabled:
-            return False
-
-        if focused and not self.focused:
-            for btn in Button.all_buttons:
-                if btn != self:
-                    btn.focused = False
-            self.focused = True
-            Button.focused_button = self
-            if self.focus_sound and self.sounds_loaded:
-                if self.music_manager:
-                    self.music_manager.play_sound(self.focus_sound)
-                else:
-                    self.focus_sound.play()
-            return True
-        elif not focused and self.focused:
-            self.focused = False
-            if Button.focused_button == self:
-                Button.focused_button = None
-            return True
-        return False
-
-    def set_disabled(self, disabled: bool) -> None:
-        """Enable or disable the button."""
-        self.disabled = disabled
-        if disabled and self.focused:
-            self.set_focus(False)
-
-    def set_toggle(self, toggled: bool) -> None:
-        """Set the toggle state for a toggle button."""
-        if self.toggle_mode:
-            self.toggled = toggled
+    # def set_disabled(self, disabled: bool) -> None:
+    #     """Enable or disable the button."""
+    #     self.disabled = disabled
 
     def set_badge(self, text: str) -> None:
         """Set or update the badge text displayed on the button."""
@@ -497,105 +375,3 @@ class Button:
     def set_hover_text(self, text: str) -> None:
         """Update the button's text when hovered."""
         self.hover_text = text
-
-    def update(self, event: Optional[pygame.event.Event] = None) -> bool:
-        """
-        Update the button state and draw it.
-
-        Optionally handles an event before drawing.
-
-        Returns:
-          True if the button state (e.g., hover) changed.
-        """
-        if event:
-            self.handle_event(event)
-        self.draw()
-        return self.hovered
-
-    @classmethod
-    def update_all(cls, event: Optional[pygame.event.Event] = None) -> bool:
-        """
-        Update all tracked buttons (and sliders) with an event.
-
-        Returns:
-          True if any button or slider state changed.
-        """
-        result = False
-        for button in cls.all_buttons:
-            if event and button.handle_event(event):
-                result = True
-        for slider in cls.all_sliders:
-            if event and slider.handle_event(event):
-                result = True
-        return result
-
-    @staticmethod
-    def clear_all() -> None:
-        """Clear all button and slider tracking lists."""
-        Button.all_buttons.clear()
-        Button.instances.clear()
-        Button.focused_button = None
-        Button.all_sliders.clear()
-
-
-class ButtonGroup:
-    """
-    Group buttons together for radio-button style behavior.
-    """
-    def __init__(self, allow_unselect: bool = False) -> None:
-        """
-        Create a button group for radio-style button behavior.
-
-        Args:
-          allow_unselect: If True, clicking a selected button will deselect it.
-        """
-        self.buttons: List[Button] = []
-        self.selected: Optional[Button] = None
-        self.allow_unselect = allow_unselect
-
-    def add(self, button: Button) -> None:
-        """Add a button to this group."""
-        self.buttons.append(button)
-        button.group = self
-        button.selected = False
-        if len(self.buttons) == 1 and not self.selected:
-            button.selected = True
-            self.selected = button
-
-    def get_selected(self) -> Optional[Button]:
-        """Retrieve the currently selected button in the group."""
-        for button in self.buttons:
-            if getattr(button, 'selected', False):
-                return button
-        return None
-
-    def select(self, button_id: str) -> bool:
-        """
-        Select a button by its ID.
-
-        Returns:
-          True if a button was successfully selected, False otherwise.
-        """
-        found = False
-        for button in self.buttons:
-            if button.id == button_id:
-                button.selected = True
-                self.selected = button
-                found = True
-            else:
-                button.selected = False
-        return found
-
-    def clear_selection(self) -> bool:
-        """
-        Clear the current selection if allowed.
-
-        Returns:
-          True if the selection was cleared, False otherwise.
-        """
-        if self.allow_unselect:
-            for button in self.buttons:
-                button.selected = False
-            self.selected = None
-            return True
-        return False

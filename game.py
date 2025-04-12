@@ -1,7 +1,6 @@
 """Main game class."""
 import pygame
 import sys
-# from engine.resource_loader import ResourceManager
 from screens.menu_system import MenuBaseStateController, MenuConfig
 from engine.music import MusicManager
 from config import (
@@ -15,7 +14,6 @@ class Game:
     def __init__(self):
         self.running = False
         self.screen = None
-        # self.resources = ResourceManager()
         self.clock = None
 
     def run_main_menu(self):

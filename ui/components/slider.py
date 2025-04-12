@@ -24,12 +24,10 @@ class SliderButton:
         bg_color (Tuple[int, int, int]): Background color of the slider track.
         hover_color (Tuple[int, int, int]): Color of the slider when hovered.
         text_color (Tuple[int, int, int]): Color for rendering text.
-        focus_color (Tuple[int, int, int]): Color of the slider track when in focus.
         disabled (bool): If True, the slider is disabled.
         tooltip (Optional[str]): Tooltip text shown when hovering.
         sound_path (Optional[str]): Path for the click sound.
         hover_sound_path (Optional[str]): Path for the hover sound.
-        focus_sound_path (Optional[str]): Path for the focus sound.
         on_value_change (Optional[Callable[[int], None]]): Callback when the slider value changes.
     """
 
@@ -49,12 +47,10 @@ class SliderButton:
         bg_color: Tuple[int, int, int] = (80, 80, 80),
         hover_color: Tuple[int, int, int] = (100, 100, 150),
         text_color: Tuple[int, int, int] = (220, 220, 220),
-        focus_color: Tuple[int, int, int] = (120, 120, 200),
         disabled: bool = False,
         tooltip: Optional[str] = None,
         sound_path: Optional[str] = None,
         hover_sound_path: Optional[str] = None,
-        focus_sound_path: Optional[str] = None,
     ) -> None:
         self.screen: pygame.Surface = screen
         self.font: pygame.font.Font = font
@@ -68,17 +64,14 @@ class SliderButton:
         self.bg_color: Tuple[int, int, int] = bg_color
         self.hover_color: Tuple[int, int, int] = hover_color
         self.text_color: Tuple[int, int, int] = text_color
-        self.focus_color: Tuple[int, int, int] = focus_color
         self.disabled: bool = disabled
         self.tooltip: Optional[str] = tooltip
         self.sound_path: Optional[str] = sound_path
         self.hover_sound_path: Optional[str] = hover_sound_path
-        self.focus_sound_path: Optional[str] = focus_sound_path
 
         # State flags
         self.is_hovered: bool = False
         self.is_dragging: bool = False
-        self.has_focus: bool = False
 
         # Callback for value change events
         self.on_value_change: Optional[Callable[[int], None]] = None
@@ -86,7 +79,6 @@ class SliderButton:
         # Sound effects (initialized below)
         self.click_sound: Optional[pygame.mixer.Sound] = None
         self.hover_sound: Optional[pygame.mixer.Sound] = None
-        self.focus_sound: Optional[pygame.mixer.Sound] = None
 
         # Try to load click sound
         if self.sound_path:
@@ -102,13 +94,6 @@ class SliderButton:
             except Exception as e:
                 logging.exception(f"Could not load hover sound '{self.hover_sound_path}': {e}")
 
-        # Try to load focus sound
-        if self.focus_sound_path:
-            try:
-                self.focus_sound = pygame.mixer.Sound(self.focus_sound_path)
-            except Exception as e:
-                logging.exception(f"Could not load focus sound '{self.focus_sound_path}': {e}")
-
         # Register with global slider list for event handling
         Button.all_sliders.append(self)
 
@@ -116,8 +101,8 @@ class SliderButton:
         """
         Draw the slider track, handle, label, current value, and tooltip (if applicable).
         """
-        # Determine track color based on focus and hover states
-        track_color = self.focus_color if self.has_focus else self.bg_color
+        # Determine track color based on hover state
+        track_color = self.bg_color
         if self.is_hovered and not self.disabled:
             track_color = self.hover_color
 
@@ -164,7 +149,7 @@ class SliderButton:
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
-        Process mouse and keyboard events for slider interactions.
+        Process mouse events for slider interactions.
 
         Returns:
             bool: True if the event was handled; False otherwise.
@@ -199,15 +184,6 @@ class SliderButton:
         elif event.type == pygame.MOUSEMOTION:
             if self.is_dragging:
                 self.update_value(mouse_pos[0])
-                handled = True
-
-        # Handle keyboard input for accessibility when slider has focus
-        elif event.type == pygame.KEYDOWN and self.has_focus:
-            if event.key == pygame.K_LEFT:
-                self.adjust_value(-self.step if self.step else -1)
-                handled = True
-            elif event.key == pygame.K_RIGHT:
-                self.adjust_value(self.step if self.step else 1)
                 handled = True
 
         return handled
@@ -249,14 +225,3 @@ class SliderButton:
             self.current_value = new_value
             if self.on_value_change:
                 self.on_value_change(self.current_value)
-
-    def set_focus(self, focus: bool) -> None:
-        """
-        Set the slider's focus state. If gaining focus, play the focus sound if available.
-
-        Args:
-            focus (bool): True to give the slider focus; False to remove focus.
-        """
-        if focus and not self.has_focus and self.focus_sound:
-            self.focus_sound.play()
-        self.has_focus = focus

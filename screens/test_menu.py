@@ -35,11 +35,11 @@ class TestAbstractMenuBase(AbstractMenuBase):
             .set_tooltip("This is a button using the default preset")
             .set_sounds(base_menu.click_sound_path, base_menu.hover_sound_path)
             .set_music_manager(config.music_manager)
+            .set_badge("New", badge_color=(255, 0, 0), badge_position="topright")
             .build()
         )
         default_btn.on_click = lambda: logging.info("Default button clicked!")
-        default_btn.set_focus(True)  # Initially focused
-        
+
         # Back to Main Menu button
         back_btn = (
             ButtonBuilder(self.screen, self.button_font, text="Back to Main Menu")

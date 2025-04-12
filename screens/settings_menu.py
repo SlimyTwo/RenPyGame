@@ -45,8 +45,7 @@ class SettingsAbstractMenuBase(AbstractMenuBase):
             .build()
         )
         music_btn.on_click = self.toggle_music
-        music_btn.set_focus(True)  # Initially focused
-        
+
         # Toggle FPS display button
         fps_text = "Hide FPS" if config.fps_display_enabled else "Show FPS"
         fps_btn = (

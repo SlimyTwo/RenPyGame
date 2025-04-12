@@ -5,8 +5,6 @@ from typing import Any, Dict, Optional
 
 import pygame
 from ui.components.button import Button
-from ui.components.button import ButtonGroup  # if you need group logic
-# from ui.components.slider import SliderButton  # if you want to handle sliders similarly
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -58,7 +56,6 @@ class ButtonBuilder:
 
         self.sound_path: Optional[str] = None
         self.hover_sound_path: Optional[str] = None
-        # Removed focus_sound_path
 
         self.text_align: str = "center"
 
@@ -75,11 +72,7 @@ class ButtonBuilder:
         self.toggled: bool = False
         self.toggle_color: tuple = (160, 160, 200)
 
-        self.focus_color: tuple = (200, 200, 255)
-        self.focus_border_color: tuple = (100, 100, 255)
         self.translation_func: Optional[Any] = None
-
-        self.button_group: Optional[ButtonGroup] = None
 
     # ----- Chainable setters for each field -----
     def set_position(self, x: int, y: int) -> "ButtonBuilder":
@@ -168,7 +161,6 @@ class ButtonBuilder:
     def set_sounds(self, click_sound: str, hover_sound: str = None) -> "ButtonBuilder":
         self.sound_path = click_sound
         self.hover_sound_path = hover_sound
-        # Removed focus_sound_path parameter
         return self
 
     def set_text_align(self, align: str) -> "ButtonBuilder":
@@ -196,21 +188,10 @@ class ButtonBuilder:
         self.toggle_color = toggle_color
         return self
 
-    def set_focus_colors(self, focus_color: tuple, focus_border_color: tuple) -> "ButtonBuilder":
-        self.focus_color = focus_color
-        self.focus_border_color = focus_border_color
-        return self
-
     def set_translation_func(self, func) -> "ButtonBuilder":
         self.translation_func = func
         return self
 
-    def set_button_group(self, group: ButtonGroup) -> "ButtonBuilder":
-        """
-        If you want to add the button to a group for radio/toggle style grouping.
-        """
-        self.button_group = group
-        return self
 
     @staticmethod
     def default_button(screen: pygame.Surface, font: pygame.font.Font, text: str = "Default Button") -> "ButtonBuilder":
@@ -283,7 +264,6 @@ class ButtonBuilder:
             hover_text=self.hover_text,
             sound_path=self.sound_path,
             hover_sound_path=self.hover_sound_path,
-            focus_sound_path=None,  # Always pass None for focus_sound_path
             text_align=self.text_align,
             shape=self.shape,
             shape_params=self.shape_params,
@@ -294,13 +274,7 @@ class ButtonBuilder:
             toggle_mode=self.toggle_mode,
             toggled=self.toggled,
             toggle_color=self.toggle_color,
-            focus_color=self.focus_color,
-            focus_border_color=self.focus_border_color,
             translation_func=self.translation_func
         )
-
-        # If a button group was specified, add the button to it
-        if self.button_group:
-            self.button_group.add(btn)
 
         return btn

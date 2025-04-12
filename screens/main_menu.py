@@ -44,8 +44,7 @@ class MainAbstractMenuBase(AbstractMenuBase):
             .build()
         )
         start_game_btn.on_click = lambda: logging.info("Starting new game!")
-        start_game_btn.set_focus(True)  # Initially focused
-        
+
         # Load Game button (disabled)
         load_game_btn = (
             ButtonBuilder(self.screen, self.button_font, text="Load Game")
