@@ -5,7 +5,7 @@ import sys
 def main():
     """Initialize and run the game."""
     try:
-        game = Game().initialize()
+        game = Game()
 
         game.run_main_menu()
 

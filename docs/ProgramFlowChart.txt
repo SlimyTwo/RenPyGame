@@ -3,7 +3,7 @@ main.py
      └─► Calls Game.initialize() in game.py
          ├─► engine/game.py (Game class)
          │    ├─► initialize():
-         │    │     ├─► Calls WindowCreationHandler.initialize_window()
+         │    │     ├─► Calls WindowCreationHandler.initialize()
          │    │     │     └─► (engine/WindowCreationHandler.py): Creates the Pygame window,
          │    │     │           sets display size, caption, loads default font, and attempts to load the main menu background.
          │    │     ├─► Sets up the clock (Pygame time management).
