@@ -1,152 +1,99 @@
-import pygame
+"""Module for managing game audio."""
 import os
-from engine.settings import SettingsManager
+import json
+import pygame
+from typing import Dict, Any, Optional
 
+class SettingsManager:
+    """Manages persistent game settings."""
+
+    def __init__(self, settings_path="settings.json"):
+        self.settings_path = settings_path
+        self.settings = {}
+        self.load_settings()
+
+    def load_settings(self) -> None:
+        """Load settings from file if it exists."""
+        try:
+            if os.path.exists(self.settings_path):
+                with open(self.settings_path, 'r') as f:
+                    self.settings = json.load(f)
+        except Exception as e:
+            print(f"Error loading settings: {e}")
+            self.settings = {}  # Use defaults on error
+
+    def save_settings(self) -> bool:
+        """Save settings to file."""
+        try:
+            with open(self.settings_path, 'w') as f:
+                json.dump(self.settings, f)
+            return True
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+            return False
+
+    def get_setting(self, key: str, default: Any = None) -> Any:
+        """Get a setting value by key, with optional default."""
+        return self.settings.get(key, default)
+
+    def set_setting(self, key: str, value: Any) -> bool:
+        """Set a setting value and save."""
+        self.settings[key] = value
+        return self.save_settings()
 
 class MusicManager:
+    """Manages background music and sound effects."""
+
     def __init__(self):
-        # Initialize pygame mixer if not already initialized
+        # Ensure mixer is initialized
         if not pygame.mixer.get_init():
             pygame.mixer.init()
-
-        # Create settings manager
-        self.settings_manager = SettingsManager()
-
+        
         # Volume settings (0.0 to 1.0)
-        self.master_volume = self.settings_manager.get_setting("master_volume", 100) / 100.0
-        self.music_volume = self.settings_manager.get_setting("music_volume", 100) / 100.0
-        self.sfx_volume = self.settings_manager.get_setting("sfx_volume", 100) / 100.0
-        self.music_enabled = self.settings_manager.get_setting("music_enabled", True)
-
-        # Track current music
+        self.settings_manager = SettingsManager()
+        self.music_volume = self.settings_manager.get_setting("music_volume", 0.5)
+        self.sound_volume = self.settings_manager.get_setting("sound_volume", 0.7)
         self.current_music = None
-        self.is_music_paused = False
+        pygame.mixer.music.set_volume(self.music_volume)
 
-    def play_music(self, music_path, loops=-1, fade_ms=500):
-        """Play background music with optional looping and fade-in"""
-        if not os.path.exists(music_path):
-            print(f"Warning: Music file not found: {music_path}")
-            return False
-
-        if not self.music_enabled:
-            return False
+    def play_music(self, music_path: str, loops: int = -1) -> None:
+        """Play background music. Loops forever by default."""
+        if not music_path or not os.path.exists(music_path):
+            print(f"Music file not found: {music_path}")
+            return
 
         try:
             pygame.mixer.music.load(music_path)
-            # Apply both master and music volume
-            effective_volume = self.music_volume * self.master_volume
-            pygame.mixer.music.set_volume(effective_volume)
-            pygame.mixer.music.play(loops=loops, fade_ms=fade_ms)
+            pygame.mixer.music.play(loops)
             self.current_music = music_path
-            self.is_music_paused = False
-            return True
         except Exception as e:
             print(f"Error playing music: {e}")
-            return False
 
-    def stop_music(self, fade_ms=500):
-        """Stop the currently playing music with optional fade-out"""
-        pygame.mixer.music.fadeout(fade_ms)
-        self.current_music = None
-        self.is_music_paused = False
-
-    def pause_music(self):
-        """Pause the currently playing music"""
-        if self.is_playing():
-            pygame.mixer.music.pause()
-            self.is_music_paused = True
-
-    def unpause_music(self):
-        """Unpause the music if it's paused"""
-        if self.is_music_paused:
-            pygame.mixer.music.unpause()
-            self.is_music_paused = False
-
-    def is_playing(self):
-        """Check if music is currently playing"""
-        return pygame.mixer.music.get_busy()
-
-    def get_volume(self):
-        """Get the current music volume"""
-        return self.music_volume
-
-    def get_master_volume(self):
-        """Get the current master volume"""
-        return self.master_volume
-
-    def set_volume(self, volume):
-        """Set the music volume (0.0 to 1.0)"""
-        # Ensure volume is between 0 and 1
-        volume = max(0.0, min(1.0, volume))
-        self.music_volume = volume
+    def stop_music(self) -> None:
+        """Stop currently playing music."""
+        pygame.mixer.music.stop()
         
-        # Apply both master and music volume
-        effective_volume = self.music_volume * self.master_volume
-        pygame.mixer.music.set_volume(effective_volume)
+    def pause_music(self) -> None:
+        """Pause currently playing music."""
+        pygame.mixer.music.pause()
         
-        # Save to settings (convert to 0-100 range for settings)
-        self.settings_manager.set_setting("music_volume", int(volume * 100))
+    def resume_music(self) -> None:
+        """Resume paused music."""
+        pygame.mixer.music.unpause()
 
-    def set_master_volume(self, volume):
-        """Set the master volume (0.0 to 1.0)"""
-        # Ensure volume is between 0 and 1
-        volume = max(0.0, min(1.0, volume))
-        self.master_volume = volume
-        
-        # Apply both master and music volume to current music
-        effective_volume = self.music_volume * self.master_volume
-        pygame.mixer.music.set_volume(effective_volume)
-        
-        # Save to settings (convert to 0-100 range for settings)
-        self.settings_manager.set_setting("master_volume", int(volume * 100))
+    def set_music_volume(self, volume: float) -> None:
+        """Set music volume (0.0 to 1.0) and save to settings."""
+        self.music_volume = max(0.0, min(1.0, volume))
+        pygame.mixer.music.set_volume(self.music_volume)
+        self.settings_manager.set_setting("music_volume", self.music_volume)
 
-    def set_music_volume(self, volume):
-        """Alias for set_volume for clarity"""
-        self.set_volume(volume)
+    def set_sound_volume(self, volume: float) -> None:
+        """Set sound effect volume (0.0 to 1.0) and save to settings."""
+        self.sound_volume = max(0.0, min(1.0, volume))
+        self.settings_manager.set_setting("sound_volume", self.sound_volume)
 
-    def get_sfx_volume(self):
-        """Get the current sound effects volume"""
-        return self.sfx_volume
-
-    def set_sfx_volume(self, volume):
-        """Set the sound effects volume (0.0 to 1.0)"""
-        # Ensure volume is between 0 and 1
-        volume = max(0.0, min(1.0, volume))
-        self.sfx_volume = volume
-        
-        # Save to settings (convert to 0-100 range for settings)
-        self.settings_manager.set_setting("sfx_volume", int(volume * 100))
-
-    def set_music_enabled(self, enabled):
-        """Enable or disable music"""
-        self.music_enabled = enabled
-        self.settings_manager.set_setting("music_enabled", enabled)
-        
-        # Stop music if disabled
-        if not enabled and self.is_playing():
-            self.stop_music()
-        # Start music if enabled and we have a current track
-        elif enabled and self.current_music and not self.is_playing():
-            self.play_music(self.current_music)
-
-    def play_sound(self, sound, volume=None):
-        """Play a sound effect with proper volume"""
+    def play_sound(self, sound: pygame.mixer.Sound) -> None:
+        """Play a sound effect."""
         if sound:
-            # Use specific volume if provided, otherwise use default sfx volume
-            # Apply master volume to all sound effects
-            play_volume = volume if volume is not None else self.sfx_volume
-            effective_volume = play_volume * self.master_volume
-            sound.set_volume(effective_volume)
+            sound.set_volume(self.sound_volume)
             sound.play()
-
-    def load_sound(self, sound_path):
-        """Load a sound file with error handling"""
-        if not os.path.exists(sound_path):
-            print(f"Warning: Sound file not found: {sound_path}")
-            return None
-
-        try:
-            return pygame.mixer.Sound(sound_path)
-        except Exception as e:
-            print(f"Error loading sound: {e}")
-            return None

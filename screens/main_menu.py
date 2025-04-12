@@ -6,6 +6,9 @@ import pygame
 from screens.menu_system import AbstractMenuBase, MenuManager
 from ui.builders.button_builder import ButtonBuilder
 
+# Import the Snake game
+from games.snake_game import SnakeGame
+
 # Constants from menu_system
 TEXT_COLOR = (220, 220, 220)
 HOVER_TEXT_COLOR = (255, 255, 0)
@@ -43,7 +46,7 @@ class MainAbstractMenuBase(AbstractMenuBase):
             .set_music_manager(config.music_manager)
             .build()
         )
-        start_game_btn.on_click = lambda: logging.info("Starting new game!")
+        start_game_btn.on_click = self.start_snake_game
 
         # Load Game button (disabled)
         load_game_btn = (
@@ -129,3 +132,19 @@ class MainAbstractMenuBase(AbstractMenuBase):
         """Handle quit button click"""
         self.menu_manager.base_menu.running = False
         return True
+        
+    def start_snake_game(self) -> None:
+        """Start the Snake game when the Start Game button is clicked"""
+        # Create an instance of the snake game
+        snake_game = SnakeGame(self.screen, self.menu_manager.base_menu.clock)
+        
+        # Pause menu music if it's playing (optional)
+        if self.menu_manager.base_menu.config.music_enabled:
+            self.menu_manager.base_menu.config.music_manager.pause_music()
+            
+        # Run the snake game
+        result = snake_game.run()
+        
+        # Resume menu music if it was playing before (optional)
+        if self.menu_manager.base_menu.config.music_enabled:
+            self.menu_manager.base_menu.config.music_manager.resume_music()
